@@ -28,6 +28,7 @@ word __at 0x2007 __CONFIG = (_WDTE_OFF);
 #define LATCH_PIN  GP5 // Pin del reloj de almacenamiento (conectado a  ST_CP del 74HC595)
 #define DISPLAY1_PIN GP1 // Control del primer display
 #define DISPLAY2_PIN GP2 // Control del segundo display
+#define BUTTON_PIN GP3 // Pin del botón
 
 // Definición de los segmentos para los números 0-9
 const char segmentos[10] = {
@@ -92,6 +93,11 @@ void parpadear99() {
     }
 }
 
+unsigned int numerosSorteados[10] = {0}; // Arreglo para registrar números sorteados
+unsigned int cantidadSorteados = 0;
+unsigned int resultado = 0;
+unsigned int unidad = 0;
+unsigned int decena = 0;
 
 void main() {
     // Configuración de los pines como salida
@@ -99,10 +105,28 @@ void main() {
     ANSEL = 0x00; // Desactivar funciones analógicas
     CMCON0 = 0x07; // Desactivar comparadores
 
+
     while (1) {
-        
-        parpadear99();
+        /*
+        if(!GP3){
+            while(!GP3){
+                resultado++;
+                if (resultado>99)
+                {
+                    resultado = 99;
+                }
+            }
+        }
+        */
 
+        resultado = 82;
+        decena = resultado/10;
+        unidad = resultado%10;
 
+        // Mostrar los números en los displays
+        mostrarNumero(unidad, 2); // Mostrar unidades en el segundo display
+        delay(10); // Tiempo de retardo en el display
+        mostrarNumero(decena, 1); // Mostrar decenas en el primer display
+        delay(10); // Tiempo de retardo en el display
     }
 }
