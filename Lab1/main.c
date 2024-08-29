@@ -56,9 +56,14 @@ void mostrarNumero(unsigned char numero, char display) {
     if (display == 1) {
         DISPLAY1_PIN = 1; // Activar el primer display
         DISPLAY2_PIN = 0; // Desactivar el segundo display
-    } else {
+    } 
+    if (display==2) {
         DISPLAY1_PIN = 0; // Desactivar el primer display
         DISPLAY2_PIN = 1; // Activar el segundo display
+    }
+    if (display== 0){
+        DISPLAY1_PIN = 0; // Desactivar el primer display
+        DISPLAY2_PIN = 0; // Activar el segundo display
     }
 
     LATCH_PIN = 0; // Latch bajo para preparar el almacenamiento
@@ -74,6 +79,18 @@ void delay(unsigned int tiempo) {
         for(j = 0; j < 1275; j++);
 }
 
+// Función para parpadear el número 99 tres veces
+void parpadear99() {
+    for (int i = 0; i < 3; i++) {
+        mostrarNumero(9, 1); // Mostrar 9 en el primer display
+        delay(10);
+        mostrarNumero(9, 2); // Mostrar 9 en el segundo display
+        delay(10); // Mantener el número en pantalla durante medio segundo
+
+        mostrarNumero(0, 0); // Apagar el primer display
+        delay(50);
+    }
+}
 
 
 void main() {
@@ -84,10 +101,7 @@ void main() {
 
     while (1) {
         
-        mostrarNumero(8, 1);
-        delay(10);
-        mostrarNumero(7, 2);
-        delay(10);
+        parpadear99();
 
 
     }
