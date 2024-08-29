@@ -44,6 +44,8 @@ const char segmentos[10] = {
     0b01101111  // 9 -> a,b,c,d,f,g
 };
 
+
+
 void enviarDato(unsigned char dato) {
     for (int i = 0; i < 8; i++) {
         DATA_PIN = (dato & 0x80) >> 7; // Enviar el bit más significativo primero
@@ -72,6 +74,16 @@ void mostrarNumero(unsigned char numero, char display) {
     LATCH_PIN = 1; // Latch alto para actualizar el display
 }
 
+
+int numeroYaSorteado(int numero, int numerosSorteados[]) {
+    for (int i = 0; i < 11; i++) {
+        if (numerosSorteados[i] == numero) {
+            return 1; // Número ya sorteado
+        }
+    }
+    return 0; // Número no sorteado
+}
+
 // Delay: Genera retrasos
 void delay(unsigned int tiempo) {
     unsigned int i;
@@ -79,6 +91,27 @@ void delay(unsigned int tiempo) {
     for(i = 0; i < tiempo; i++)
         for(j = 0; j < 1275; j++);
 }
+
+
+void parpadeo99(){
+    for (int i = 0; i < 3; i++)
+    {
+        mostrarNumero(9,1);
+        delay(10);
+        mostrarNumero(9,2);
+        delay(10);
+        mostrarNumero(0,0);
+        delay(200);
+    }
+}
+
+unsigned int revolviendo = 0;
+unsigned int resultado = 0;
+unsigned int numeroSorteo = 0;
+unsigned int posicion = 0;
+unsigned int numerosSorteados[10] = {0};
+unsigned int unidad = 0;
+unsigned int decena = 0;
 
 
 
@@ -89,13 +122,9 @@ void main() {
     ANSEL = 0x00; // Desactiva funciones analógicas
     CMCON0 = 0x07; // Desactiva comparadores
 
-
     GPIO = 0x00;   //Salidas inicialmente en 0
 
-    unsigned int revolviendo = 0;
-    unsigned int resultado = 31;
-    unsigned int unidad = 0;
-    unsigned int decena = 0;
+
 
     while (1) {
         // Incrementar el número "revolviendo" constantemente
@@ -105,13 +134,27 @@ void main() {
         }
 
         if (GP3){
-            resultado = revolviendo;
+            if(posicion<11 && numeroYaSorteado(resultado, numerosSorteados)){
+                resultado = revolviendo;
+                numerosSorteados[posicion] = resultado; 
+                posicion++;
+                // Calcular las decenas y unidades del número a mostrar
+
+            }
+
+            if (posicion==11)
+            {
+                for (int i = 0; i < 10; i++) {
+                    numerosSorteados[i] = 0; // Establecer el elemento en cero
+                }
+                posicion = 0;
+                resultado = 0;
+                parpadeo99();
+            }
         }
-        
-        // Calcular las decenas y unidades del número a mostrar
+
         decena = resultado / 10;
         unidad = resultado % 10;
-
         // Mostrar el número en los displays
         mostrarNumero(unidad, 2); // Mostrar unidades en el segundo display
         delay(10); // Tiempo de retardo en el display
