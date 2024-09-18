@@ -44,11 +44,13 @@ Se utiliza un modelo de maquina de estados para la programacion del microcontrol
 //////////////////////////////////////
 #define LED_RED PB7
 #define LED_BLUE PB6
+#define LED_GREEN PB5
 
 
 // Variables globales
 volatile uint8_t button_red_pressed = 0;   // Variable para indicar si el boton rojo fue presionado
 volatile uint8_t button_blue_pressed = 0;   // Variable para indicar si el boton azul fue presionado
+volatile uint8_t button_green_pressed = 0;   // Variable para indicar si el boton verde fue presionado
 volatile uint8_t dos_cientos_ms = 0;       // Contador de 200 ms
 volatile uint8_t led_on_time = 0;          // Tiempo que el LED rojo debe estar encendido
 
@@ -57,15 +59,17 @@ volatile uint8_t led_on_time = 0;          // Tiempo que el LED rojo debe estar 
 //////////////////////////////////////
 void setup_pins() {
     // Configura los pines de los LEDs como salidas
-    DDRB |= (1 << LED_RED) | (1 << LED_BLUE);
+    DDRB |= (1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN);
     // Inicializa los LEDs apagados
-    PORTB &= ~(1 << LED_RED) | (1 << LED_BLUE);
+    PORTB &= ~(1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN);
 }
 
 void setup_button_interrupts() {
     // Configura interrupciones externas en INT0 (PB3)
-    GIMSK |= (1 << INT0) | (1 << INT1);  // Habilita interrupción externa
+    GIMSK |= (1 << INT0) | (1 << INT1) | (1 << PCIE0);  // Habilita interrupción externa
     MCUCR |= (1 << ISC00) | (1 << ISC10); // Interrupción por cualquier cambio en el pin
+    
+    PCMSK |= (1 << PCINT0); // Habilita la interrupción para el pin PC0 (PCINT16)
 }
 
 void setup_timer0() {
@@ -104,8 +108,14 @@ ISR(INT1_vect) {
     button_blue_pressed = 1; // Marca que se presionó el botón rojo
 }
 
+ISR(PCINT0_vect) {
+    button_green_pressed = 1; // Marca que se presionó el botón rojo
+}
 
-//////////////////////////////////////
+
+
+
+/////////////////////////////////////
 // FUNCIONES DE CONTROL
 //////////////////////////////////////
 void dificultad_led(int led, int nivel) {
@@ -127,9 +137,15 @@ int main() {
             button_red_pressed = 0;     // Resetea la variable del botón
         }
 
-          if (button_blue_pressed == 1) {
-          dificultad_led(LED_BLUE, 0); // Enciende el LED rojo en el nivel 0
-          button_blue_pressed = 0;     // Resetea la variable del botón
+        if (button_blue_pressed == 1) {
+        dificultad_led(LED_BLUE, 0); // Enciende el LED rojo en el nivel 0
+        button_blue_pressed = 0;     // Resetea la variable del botón
         }
-    }
+
+        if (button_green_pressed == 1) {
+        dificultad_led(LED_GREEN, 0); // Enciende el LED rojo en el nivel 0
+        button_green_pressed = 0;     // Resetea la variable del botón
+        }
+
+}
 }
