@@ -35,148 +35,101 @@ de los botones, como tambien del fin de cuenta del timer, se usan interrupciones
 Se utiliza un modelo de maquina de estados para la programacion del microcontrolador.
 */
 
-#include <avr/io.h> // Libreria para manejo de puertos
+
+#include <avr/io.h>        // Libreria para manejo de puertos
 #include <avr/interrupt.h> // Libreria para manejo de interrupciones
 
 //////////////////////////////////////
-//DEFINICIONES
-/////////////////////////////////////
-// Definicion de pines
+// DEFINICIONES
+//////////////////////////////////////
 #define LED_RED PB7
 #define LED_BLUE PB6
-#define LED_GREEN PB5
-#define LED_YELLOW PB4
-#define BUTTON_RED PB3    // Interrupcion del PIN PB3 
-#define BUTTON_BLUE PB2   // interrupcion del PIN PB2
-#define BUTTON_GREEN PB1  // Interrupcion del PIN PB1
-#define BUTTON_YELLOW PB0 // Interrupcion del PIN PB0
 
-// Definicion de variables
-int button_red_pressed = 0;    // Variable para indicar si el boton rojo fue presionado
-int button_blue_pressed = 0;   // Variable para indicar si el boton azul fue presionado
-int button_green_pressed = 0;  // Variable para indicar si el boton verde fue presionado
-int button_yellow_pressed = 0; // Variable para indicar si el boton amarillo fue presionado
-int dos_cientos_ms = 0; // Contador de 200ms
 
-// Definicion de estados (PROVISIONAL)
-typedef enum {
-  INIT,     // Estado inicial
-  WAITING,  // Estado de espera
-  PLAYING,  // Estado de juego
-  WRONG     // Estado de error
-} state;
-
+// Variables globales
+volatile uint8_t button_red_pressed = 0;   // Variable para indicar si el boton rojo fue presionado
+volatile uint8_t button_blue_pressed = 0;   // Variable para indicar si el boton azul fue presionado
+volatile uint8_t dos_cientos_ms = 0;       // Contador de 200 ms
+volatile uint8_t led_on_time = 0;          // Tiempo que el LED rojo debe estar encendido
 
 //////////////////////////////////////
-//FUNCIONES DE CONFIGURACION
-/////////////////////////////////////
-void setup_pins(){ // Funcion de configuracion de registros de pines
-  // Configura los pines de los LEDs como salidas
-  DDRB |= (1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN) | (1 << LED_YELLOW);
-  // Inicializa los estados de los pines  en LOW
-  PORTB = 0x00;
+// FUNCIONES DE CONFIGURACION
+//////////////////////////////////////
+void setup_pins() {
+    // Configura los pines de los LEDs como salidas
+    DDRB |= (1 << LED_RED) | (1 << LED_BLUE);
+    // Inicializa los LEDs apagados
+    PORTB &= ~(1 << LED_RED) | (1 << LED_BLUE);
 }
 
-void setup_button_interrupts() { // Funcion de configuracion de interrupciones por cambio de pin
-  GIMSK |= (1 << PCIE0);  // Habilita las interrupciones en el grupo PCINT0-7 (puerto B)
-  PCMSK |= (1 << PCINT0) | (1 << PCINT1) | (1 << PCINT2) | (1 << PCINT3);  // Habilita interrupciones en PB0-PB3
+void setup_button_interrupts() {
+    // Configura interrupciones externas en INT0 (PB3)
+    GIMSK |= (1 << INT0) | (1 << INT1);  // Habilita interrupción externa
+    MCUCR |= (1 << ISC00) | (1 << ISC10); // Interrupción por cualquier cambio en el pin
 }
 
-void setup_timer0(){ // Funcion de configuracion de temporizador, se configura para generar interrupciones cada 200ms
-  // Modo CTC (Clear Timer on Compare Match) genera una interrupcion cuando el contador llega al valor de OCR0A
-  TCCR0A |=(1 << WGM01);  //0x00;//
-  // Selecciona fuente de reloj (divide la frecuencia del reloj entre 1024)
-  TCCR0B = (1 << CS00) | (1 << CS02); 
-  // Valor de comparacion para que la cuenta sea de 200ms
-  // Se calcula a partir del oscilador interno de 1MHz y el preescalador de 1024
-  OCR0A = 100; // Se calcula para generar una interrupcion con una frecuencia de 5Hz (cada 200ms)
-  // Habilita las interrupciones por comparacion  
-  TIMSK |= (1 << OCIE0A); //(1 << TOIE0);//
-  // Activa la bandera de interrucion por comparacion
-  TIFR |= (1<<OCF0A);//(1 << TOV0); 
+void setup_timer0() {
+    // Configuración del Timer0 en modo CTC (Clear Timer on Compare Match)
+    TCCR0A |= (1 << WGM01); // Modo CTC
+    // Prescaler de 1024 para el temporizador
+    TCCR0B |= (1 << CS00) | (1 << CS02);
+    // Valor de comparación para generar interrupciones cada 200 ms
+    OCR0A = 100; // Basado en un reloj de 1 MHz y prescaler de 1024
+    // Habilita las interrupciones por comparación
+    TIMSK |= (1 << OCIE0A);
 }
 
 //////////////////////////////////////
-//ATENCION DE INTERRUPCIONES
-/////////////////////////////////////
-
-ISR(TIMER0_COMPA_vect){//TIMER0_OVF_vect) { // Interrupcion del temporizador
-  dos_cientos_ms++; // Incrementa el contador de medio segundo
-}
-
-
-//ISR(PCINT3_vect){
-  //button_red_pressed = 1;
-//}
-
-ISR(PCINT2_vect){
-  button_blue_pressed = 1;
-}
-
-ISR(PCINT1_vect){
-  button_green_pressed = 1;
-}
-
-ISR(PCINT0_vect){
-  button_yellow_pressed = 1;
-}
-  
-
+// INTERRUPCIONES
 //////////////////////////////////////
-//FUNCIONES DE JUEGO
-/////////////////////////////////////
-void led_on(int led){ // Funcion para encender un LED. FUNCIONA
-  PORTB |= (1 << led);
-}
 
-void led_off(int led){ // Funcion para apagar un LED
-  PORTB &= ~(1 << led);
-}
-
-void all_leds_on(){ // Funcion para encender todos los LEDs. FUNCIONA
-  PORTB |= (1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN) | (1 << LED_YELLOW);
-}
-
-void all_leds_off(){ // Funcion para apagar todos los LEDs
-  PORTB &= ~(1 << LED_RED) & ~(1 << LED_BLUE) & ~(1 << LED_GREEN) & ~(1 << LED_YELLOW);
-}
-
-
-void dificultad_led(int led, int nivel){ // Disminuye el tiempo de encendido del LED segun el nivel de dificultad
-  int reduccion_tiempo = 20; // Un segundo son 100, 0.2 segundos son 20 (9 niveles de dificultad)
-  int tiempo_led = 200 - (nivel * reduccion_tiempo);
-  if (dos_cientos_ms < tiempo_led) { // 1 segundo ha pasado (5 x 200 ms)
-    led_on(led); // Enciende todos los LEDs
-  } 
-  else led_off(led); // Apaga todos los LEDs
-}
-
-void parpadeo_leds(int parpadeos){ // Parpadea todos los LEDs un numero de veces
-  for (int i = 0; i < parpadeos; i++){
-    if (dos_cientos_ms <100) { // 1 segundo ha pasado )
-        all_leds_on(); // Enciende todos los LEDs
-    } 
-    if(dos_cientos_ms >100 && dos_cientos_ms <200){ // 2 segundos han pasado 
-        all_leds_off(); // Apaga todos los LEDs
+// Interrupción del Timer0
+ISR(TIMER0_COMPA_vect) {
+    if (led_on_time > 0) {
+        dos_cientos_ms++;
+        if (dos_cientos_ms >= led_on_time) {
+            PORTB = (0 << LED_RED) | (0 << LED_BLUE) ; // Apaga el LED rojo
+            dos_cientos_ms = 0;
+            led_on_time = 0; // Resetea el tiempo de encendido
+        }
     }
-    if(dos_cientos_ms >200){ // 3 segundos han pasado 
-        dos_cientos_ms=0; // Enciende todos los LEDs
-    }
-  }
 }
 
-int main(){
-  sei(); // Habilita las interrupciones
-  setup_pins(); // Configura los pines de los LEDs
-  setup_timer0(); // Configura el temporizador
-  dos_cientos_ms = 0;
-  while(1){
-    //if(button_blue_pressed){
-      led_on(LED_BLUE);
-    //}
-  dificultad_led(LED_GREEN, 9);
-    
+// Interrupción del botón rojo (INT0)
+ISR(INT0_vect) {
+    button_red_pressed = 1; // Marca que se presionó el botón rojo
+}
 
-  }
- 
+ISR(INT1_vect) {
+    button_blue_pressed = 1; // Marca que se presionó el botón rojo
+}
+
+
+//////////////////////////////////////
+// FUNCIONES DE CONTROL
+//////////////////////////////////////
+void dificultad_led(int led, int nivel) {
+    int reduccion_tiempo = 27;              // Reducción de tiempo por nivel (9 niveles)
+    led_on_time = 250 - (nivel * reduccion_tiempo); // 250 Equivale a 200 ms
+    PORTB |= (1 << led);                    // Enciende el LED
+    dos_cientos_ms = 0;                     // Reinicia el contador de 200 ms
+}
+
+int main() {
+    sei();              // Habilita interrupciones globales
+    setup_pins();       // Configura los pines de los LEDs
+    setup_button_interrupts(); // Configura las interrupciones de los botones
+    setup_timer0();     // Configura el temporizador
+
+    while (1) {
+        if (button_red_pressed == 1) {
+            dificultad_led(LED_RED, 0); // Enciende el LED rojo en el nivel 0
+            button_red_pressed = 0;     // Resetea la variable del botón
+        }
+
+          if (button_blue_pressed == 1) {
+          dificultad_led(LED_BLUE, 0); // Enciende el LED rojo en el nivel 0
+          button_blue_pressed = 0;     // Resetea la variable del botón
+        }
+    }
 }
