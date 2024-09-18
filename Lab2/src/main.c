@@ -54,7 +54,11 @@ volatile uint8_t button_blue_pressed = 0;   // Variable para indicar si el boton
 volatile uint8_t button_green_pressed = 0;   // Variable para indicar si el boton verde fue presionado
 volatile uint8_t button_yellow_pressed = 1;
 volatile uint8_t dos_cientos_ms = 0;       // Contador de 200 ms
-volatile uint8_t led_on_time = 0;          // Tiempo que el LED rojo debe estar encendido
+volatile uint16_t led_on_time = 0;           // Tiempo de encendido del LED en dificultad
+volatile uint8_t blink_counter = 0;          // Contador para parpadeo de todos los LEDs
+volatile uint8_t total_blinks = 0;           // Número total de parpadeos
+volatile uint8_t led_state = 0;              // Estado actual del parpadeo (encendido/apagado)
+volatile uint8_t parpadeo_intervalo = 0;    // Número de interrupciones para 2 segundos (10 interrupciones de 200 ms)
 
 //////////////////////////////////////
 // FUNCIONES DE CONFIGURACION
@@ -72,7 +76,7 @@ void setup_button_interrupts() {
     MCUCR |= (1 << ISC00) | (1 << ISC10); // Interrupción por cualquier cambio en el pin
     
     PCMSK |= (1 << PCINT0); // Habilita la interrupción para el pin PC0 (PCINT16)
-    PCMSK1 |= (1 << PCINT8); // Habilita la interrupción para el pin PC1 (PCINT17)
+    PCMSK1 |= (1 << PCINT8); 
 }
 
 void setup_timer0() {
@@ -90,17 +94,38 @@ void setup_timer0() {
 // INTERRUPCIONES
 //////////////////////////////////////
 
-// Interrupción del Timer0
+// ISR del temporizador para manejar los LEDs
 ISR(TIMER0_COMPA_vect) {
     if (led_on_time > 0) {
-        dos_cientos_ms++;
+        dos_cientos_ms++;  // Incrementa el contador para el tiempo de encendido
         if (dos_cientos_ms >= led_on_time) {
-            PORTB = (0 << LED_RED) | (0 << LED_BLUE) ; // Apaga el LED rojo
+            // Apaga los LEDs al completar el tiempo
+            PORTB &= ~(1 << LED_RED) & ~(1 << LED_BLUE) & ~(1 << LED_GREEN) & ~(1 << LED_YELLOW);
             dos_cientos_ms = 0;
-            led_on_time = 0; // Resetea el tiempo de encendido
+            led_on_time = 0;  // Resetea el tiempo de encendido
+        }
+    }
+
+    // Manejo del parpadeo de todos los LEDs
+    static uint8_t parpadeo_contador = 0;  // Contador para controlar los ciclos de parpadeo
+    if (blink_counter < total_blinks) {
+        parpadeo_contador++;
+        if (parpadeo_contador >= parpadeo_intervalo) {
+            if (led_state == 0) {
+                // Enciende todos los LEDs
+                PORTB |= (1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN) | (1 << LED_YELLOW);
+                led_state = 1;
+            } else {
+                // Apaga todos los LEDs
+                PORTB &= ~(1 << LED_RED) & ~(1 << LED_BLUE) & ~(1 << LED_GREEN) & ~(1 << LED_YELLOW);
+                led_state = 0;
+                blink_counter++;  // Solo incrementa el contador cuando se apagan los LEDs
+            }
+            parpadeo_contador = 0;  // Reinicia el contador
         }
     }
 }
+
 
 // Interrupción del botón rojo (INT0)
 ISR(INT0_vect) {
@@ -120,16 +145,23 @@ ISR(__vector_PCINT8_vect) {
 }
 
 
-
-
 /////////////////////////////////////
 // FUNCIONES DE CONTROL
 //////////////////////////////////////
+// Función para manejar la dificultad y encender un solo LED durante un tiempo reducido
 void dificultad_led(int led, int nivel) {
     int reduccion_tiempo = 27;              // Reducción de tiempo por nivel (9 niveles)
-    led_on_time = 250 - (nivel * reduccion_tiempo); // 250 Equivale a 200 ms
-    PORTB |= (1 << led);                    // Enciende el LED
-    dos_cientos_ms = 0;                     // Reinicia el contador de 200 ms
+    led_on_time = 250 - (nivel * reduccion_tiempo); // 250 ms para nivel 0
+    PORTB |= (1 << led);                    // Enciende el LED especificado
+    dos_cientos_ms = 0;                     // Reinicia el contador de tiempo
+}
+
+// Función para parpadear todos los LEDs un número específico de veces
+void blink_all_leds(int times) {
+    total_blinks = times;  // Configura el número de veces que deben parpadear los LEDs
+    blink_counter = 0;     // Reinicia el contador de parpadeos
+    led_state = 0;         // Inicia con los LEDs apagados
+    parpadeo_intervalo = 100;  // Configura el número de interrupciones necesarias para 2 segundos (10 interrupciones de 200 ms)
 }
 
 int main() {
@@ -150,12 +182,12 @@ int main() {
         }
 
         if (button_green_pressed == 1) {
-        dificultad_led(LED_GREEN, 0); // Enciende el LED rojo en el nivel 0
+         blink_all_leds(4); // Enciende el LED rojo en el nivel 0
         button_green_pressed = 0;     // Resetea la variable del botón
         }
 
         if(button_yellow_pressed == 1) {
-        dificultad_led(LED_YELLOW, 0); // Enciende el LED rojo en el nivel 0
+        dificultad_led(LED_YELLOW,0); // Enciende el LED rojo en el nivel 0
         button_yellow_pressed = 0;     // Resetea la variable del botón
         }
 
