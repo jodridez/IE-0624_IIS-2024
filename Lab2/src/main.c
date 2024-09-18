@@ -122,7 +122,6 @@ ISR(PCINT0_vect){
 }
   
 
-
 //////////////////////////////////////
 //FUNCIONES DE JUEGO
 /////////////////////////////////////
@@ -142,23 +141,40 @@ void all_leds_off(){ // Funcion para apagar todos los LEDs
   PORTB &= ~(1 << LED_RED) & ~(1 << LED_BLUE) & ~(1 << LED_GREEN) & ~(1 << LED_YELLOW);
 }
 
+
+void dificultad_led(int led, int nivel){ // Disminuye el tiempo de encendido del LED segun el nivel de dificultad
+  int reduccion_tiempo = 20; // Un segundo son 100, 0.2 segundos son 20 (9 niveles de dificultad)
+  int tiempo_led = 200 - (nivel * reduccion_tiempo);
+  if (dos_cientos_ms < tiempo_led) { // 1 segundo ha pasado (5 x 200 ms)
+    led_on(led); // Enciende todos los LEDs
+  } 
+  else led_off(led); // Apaga todos los LEDs
+}
+
+void parpadeo_leds(int parpadeos){ // Parpadea todos los LEDs un numero de veces
+  for (int i = 0; i < parpadeos; i++){
+    if (dos_cientos_ms <100) { // 1 segundo ha pasado )
+        all_leds_on(); // Enciende todos los LEDs
+    } 
+    if(dos_cientos_ms >100 && dos_cientos_ms <200){ // 2 segundos han pasado 
+        all_leds_off(); // Apaga todos los LEDs
+    }
+    if(dos_cientos_ms >200){ // 3 segundos han pasado 
+        dos_cientos_ms=0; // Enciende todos los LEDs
+    }
+  }
+}
+
 int main(){
   sei(); // Habilita las interrupciones
   setup_pins(); // Configura los pines de los LEDs
   setup_timer0(); // Configura el temporizador
   dos_cientos_ms = 0;
   while(1){
-  
-    if (dos_cientos_ms <100) { // 1 segundo ha pasado (5 x 200 ms)
-        all_leds_on(); // Enciende todos los LEDs
-    } 
-    if(dos_cientos_ms >100 && dos_cientos_ms <200){ // 2 segundos han pasado (10 x 200 ms)
-        all_leds_off(); // Apaga todos los LEDs
-    }
-    if (dos_cientos_ms >200)
-    {
-      dos_cientos_ms = 0; // Reinicia el contador de 200ms
-    }
+    //if(button_blue_pressed){
+      led_on(LED_BLUE);
+    //}
+  dificultad_led(LED_GREEN, 9);
     
 
   }
