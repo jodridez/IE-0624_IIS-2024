@@ -47,6 +47,16 @@ Se utiliza un modelo de maquina de estados para la programacion del microcontrol
 #define LED_GREEN PB5
 #define LED_YELLOW PB4
 
+// Definicion de estados
+typedef enum {
+    WAITING,
+    INIT,
+    SHOW_SEQUENCE,
+    USER_INPUT,
+    CHECK_SEQUENCE,
+    GAME_OVER
+} state;
+
 
 // Variables globales
 volatile uint8_t button_red_pressed = 0;   // Variable para indicar si el boton rojo fue presionado
@@ -59,6 +69,12 @@ volatile uint8_t blink_counter = 0;          // Contador para parpadeo de todos 
 volatile uint8_t total_blinks = 0;           // Número total de parpadeos
 volatile uint8_t led_state = 0;              // Estado actual del parpadeo (encendido/apagado)
 volatile uint8_t parpadeo_intervalo = 0;    // Número de interrupciones para 2 segundos (10 interrupciones de 200 ms)
+state estado = 0;                 // Estado actual de la máquina de estados
+volatile uint8_t nivel = 0; // Nivel de dificultad
+volatile uint8_t lenght = 4; // Longitud de la secuencia
+volatile uint8_t revolviendo = 0; // Variable para controlar la secuencia de LEDs
+int sequence_game[9]; // Secuencia de LEDs a memorizar 4 + 5 niveles de dificultad
+int sequence_user[9]; // Secuencia de LEDs ingresada por el usuario
 
 //////////////////////////////////////
 // FUNCIONES DE CONFIGURACION
@@ -141,7 +157,7 @@ ISR(PCINT0_vect) {
 }
 
 ISR(__vector_PCINT8_vect) {
-    button_yellow_pressed = 1; // Marca que se presionó el botón rojo
+  button_yellow_pressed = 1; // Marca que se presionó el botón rojo
 }
 
 
@@ -164,32 +180,144 @@ void blink_all_leds(int times) {
     parpadeo_intervalo = 100;  // Configura el número de interrupciones necesarias para 2 segundos (10 interrupciones de 200 ms)
 }
 
+int random(){ // Genera un número aleatorio entre 0 y 3
+          revolviendo++;
+        if (revolviendo > 3) {
+            revolviendo = 0;
+        }
+
+  return revolviendo%4;
+}
+
+// Generar secuencia aleatoria de LEDs
+void generate_sequence(int *sequence, int length) {
+    for (int i = 0; i < length; i++) {
+      sequence[i] = random();  // Genera un número aleatorio entre 0 y 3
+    }
+}
+
+void show_sequence(int *sequence, int length) {
+    for (int i = 0; i < length; i++) {
+        switch (sequence[i]) {
+            case 0:
+                dificultad_led(LED_RED, i);
+                break;
+            case 1:
+                dificultad_led(LED_BLUE, i);
+                break;
+            case 2:
+                dificultad_led(LED_GREEN, i);
+                break;
+            case 3:
+                dificultad_led(LED_YELLOW, i);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+// Función para recebir la secuencia del usuario
+void get_user_sequence(int *sequence, int length) {
+    for (int i = 0; i < length; i++) {
+        // Espera a que el usuario presione un botón
+        while (button_red_pressed == 0 && button_blue_pressed == 0 && button_green_pressed == 0) {
+            // Espera a que el usuario presione un botón
+        }
+        // Registra el botón presionado en la secuencia
+        if (button_red_pressed == 1) {
+            sequence[i] = 0;
+        } else if (button_blue_pressed == 1) {
+            sequence[i] = 1;
+        } else if (button_green_pressed == 1) {
+            sequence[i] = 2;
+        } else if (button_yellow_pressed == 1) {
+            sequence[i] = 3;
+        }
+        // Reinicia las variables de los botones
+        button_red_pressed = 0;
+        button_blue_pressed = 0;
+        button_green_pressed = 0;
+        button_yellow_pressed = 0;
+    }
+}
+
+
+// Función para verificar si la secuencia ingresada por el usuario es correcta
+int check_sequence(int *sequence, int length) {
+    for (int i = 0; i < length; i++) {
+        // Espera a que el usuario presione un botón
+        while (button_red_pressed == 0 && button_blue_pressed == 0 && button_green_pressed == 0 && button_yellow_pressed == 0) {
+            // Espera a que el usuario presione un botón
+        }
+        // Verifica si el botón presionado coincide con la secuencia
+        if ((button_red_pressed == 1 && sequence[i] == 0) || (button_blue_pressed == 1 && sequence[i] == 1) || (button_green_pressed == 1 && sequence[i] == 2) || (button_yellow_pressed == 1 && sequence[i] == 3)) {
+            // Reinicia las variables de los botones
+            button_red_pressed = 0;
+            button_blue_pressed = 0;
+            button_green_pressed = 0;
+            button_yellow_pressed = 0;
+        } else {
+            return 0;  // Retorna 0 si la secuencia es incorrecta
+        }
+    }
+    return 1;  // Retorna 1 si la secuencia es correcta
+}
+
+// Función para reiniciar las variables del juego
+void reset_game() {
+    button_red_pressed = 0;
+    button_blue_pressed = 0;
+    button_green_pressed = 0;
+    button_yellow_pressed = 0;
+    dos_cientos_ms = 0;
+    led_on_time = 0;
+    blink_counter = 0;
+    total_blinks = 0;
+    led_state = 0;
+    parpadeo_intervalo = 0;
+    revolviendo = 0;
+}
+
+// Función para manejar la máquina de estados
+void FSM(){
+  switch (estado)
+  {
+  case WAITING:
+    if(button_red_pressed == 1 || button_blue_pressed == 1 || button_green_pressed == 1) {
+      estado = INIT;
+    }
+  break;
+  
+  case INIT:
+    blink_all_leds(2);
+    estado = SHOW_SEQUENCE;
+  break;
+
+  case SHOW_SEQUENCE:
+    // Mostrar secuencia
+    generate_sequence(sequence_game, lenght);  // Genera una secuencia aleatoria de 4 LEDs
+    show_sequence(sequence_game, lenght);  // Muestra la secuencia de LEDs
+    estado = USER_INPUT;
+  break;
+
+
+   
+  default:
+    break;
+  }
+}
+
 int main() {
     sei();              // Habilita interrupciones globales
     setup_pins();       // Configura los pines de los LEDs
     setup_button_interrupts(); // Configura las interrupciones de los botones
     setup_timer0();     // Configura el temporizador
+    estado = WAITING;    // Inicializa la máquina de estados
+    lenght = 4; // Longitud de la secuencia
 
     while (1) {
-        if (button_red_pressed == 1) {
-            dificultad_led(LED_RED, 0); // Enciende el LED rojo en el nivel 0
-            button_red_pressed = 0;     // Resetea la variable del botón
-        }
-
-        if (button_blue_pressed == 1) {
-        dificultad_led(LED_BLUE, 0); // Enciende el LED rojo en el nivel 0
-        button_blue_pressed = 0;     // Resetea la variable del botón
-        }
-
-        if (button_green_pressed == 1) {
-         blink_all_leds(4); // Enciende el LED rojo en el nivel 0
-        button_green_pressed = 0;     // Resetea la variable del botón
-        }
-
-        if(button_yellow_pressed == 1) {
-        dificultad_led(LED_YELLOW,0); // Enciende el LED rojo en el nivel 0
-        button_yellow_pressed = 0;     // Resetea la variable del botón
-        }
+        FSM();
 
 }
 }
