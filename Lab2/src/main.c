@@ -2,7 +2,7 @@
 #include <avr/interrupt.h> // Librería para manejo de interrupciones
 #include <stdlib.h>        // Librería para funciones de utilidad
 #include <time.h>          // Librería para funciones de tiempo
-#include <util/delay.h>    // Librería para retardos
+
 
 //////////////////////////////////////
 // DEFINICIONES
@@ -29,6 +29,7 @@ int button_red_pressed = 0;   // Variable para indicar si se presionó el botón
 int button_blue_pressed = 0;  // Variable para indicar si se presionó el botón azul
 int button_green_pressed = 0; // Variable para indicar si se presionó el botón verde
 int sequence_game[12]; // Secuencia de juego 3 + 9 niveles
+int sequence_user[12]; // Secuencia del usuario 3 + 9 niveles
 int level = 0; // Nivel actual del juego
 state estado; // Estado inicial de la máquina de estados
 
@@ -72,7 +73,7 @@ ISR(TIMER0_COMPA_vect) {
 // Interrupción del botón rojo (INT0)
 ISR(INT0_vect) {
     if (contador > 50) {
-        button_red_pressed = 1; // Marca que se presionó el botón rojo
+      button_red_pressed = 1; // Marca que se presionó el botón rojo
     }
 }
 
@@ -101,6 +102,19 @@ void all_leds_off() {
     PORTB &= ~((1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN));
 }
 
+void led_blink(int led) {
+  contador = 0;
+  while (contador < 200) {
+    if (contador < 100) { // 1 segundo ha pasado (5 x 200 ms)
+      PORTB |= (1 << led); // Enciende el LED correspondiente
+    }
+    if (contador >= 100 && contador < 200) { // 2 segundos han pasado (10 x 200 ms)
+      all_leds_off(); // Apaga todos los LEDs
+    }
+  }
+  contador = 0;
+}
+
 void generate_sequence(int* sequence_game, int level) {
     // Genera una secuencia aleatoria de 3 + 6 niveles
     for (int i = 0; i < 3 + level; i++) {
@@ -109,7 +123,7 @@ void generate_sequence(int* sequence_game, int level) {
 }
 
 void show_sequence(int* sequence_game, int level) {
-    for (int i = 0; i < 3 + level; i++) {
+    for (int i = 0; i < 2 + level; i++) {
         // Apaga todos los LEDs
         all_leds_off();
         contador = 0;
@@ -133,6 +147,42 @@ void show_sequence(int* sequence_game, int level) {
     // Apaga todos los LEDs después de mostrar la secuencia
     all_leds_off();
 }
+
+void user_input(int* sequence_user, int level) {
+    // Espera a que el usuario presione un botón
+    int cuenta_maxima = 0;
+  while (cuenta_maxima < 2+level) {
+    if (button_red_pressed) {
+      led_blink(LED_RED);
+      sequence_user[cuenta_maxima] = 0;
+      button_red_pressed = 0;
+      cuenta_maxima++;
+    }
+    if (button_blue_pressed) {
+      led_blink(LED_BLUE);
+      sequence_user[cuenta_maxima] = 1;
+      button_blue_pressed = 0;
+      cuenta_maxima++;
+    }
+    if (button_green_pressed) {
+      led_blink(LED_GREEN);
+      sequence_user[cuenta_maxima] = 2;
+      button_green_pressed = 0;
+      cuenta_maxima++;
+    }
+  }
+}
+
+void check_sequence(int* sequence_game, int* sequence_user, int level) {
+    // Compara la secuencia del juego con la secuencia del usuario
+    for (int i = 0; i < 2 + level; i++) {
+        if (sequence_game[i] != sequence_user[i]) {
+          estado = GAME_OVER; // Cambia al estado GAME_OVER si la secuencia es incorrecta
+        }
+    }
+    level++; // Incrementa el nivel si la secuencia es correcta
+}
+
 
 
 // Función para manejar la máquina de estados
@@ -171,6 +221,35 @@ void FSM() {
         estado = USER_INPUT;
       break;
 
+      case USER_INPUT:
+        user_input(sequence_user, level);
+        estado = CHECK_SEQUENCE;
+      break;
+
+      case CHECK_SEQUENCE:
+        check_sequence(sequence_game, sequence_user, level);
+        if (estado != GAME_OVER) {
+          level++;
+          estado = GENERATE_SEQUENCE;
+        }
+      break;
+
+      case GAME_OVER: // Parpadea 3 veces
+      for (int i = 0; i < 3; i++) {
+                while (contador < 200) {
+                  if (contador < 100) { // 1 segundo ha pasado (5 x 200 ms)
+                    all_leds_on(); // Enciende todos los LEDs
+                  }
+                  if (contador >= 100 && contador < 200) { // 2 segundos han pasado (10 x 200 ms)
+                    all_leds_off(); // Apaga todos los LEDs
+                  }
+                }
+                  contador = 0;
+              }
+        level = 0; // Reinicia el nivel del juego
+        estado = WAITING;
+
+      
       default:
           break;
     }
