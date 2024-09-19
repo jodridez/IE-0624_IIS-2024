@@ -10,17 +10,20 @@
 #define LED_RED PB7
 #define LED_BLUE PB6
 #define LED_GREEN PB5
+
 #define TWO_SECONDS 266
 #define TWO_MILI_SECONDS 29
+#define DEBOUNCE_TIME 200 // Tiempo de desrebote en milisegundos
+
 // Definición de estados
 typedef enum {
-    WAITING,
-    INIT,
-    GENERATE_SEQUENCE,
-    SHOW_SEQUENCE,
-    USER_INPUT,
-    CHECK_SEQUENCE,
-    GAME_OVER
+  WAITING,
+  INIT,
+  GENERATE_SEQUENCE,
+  SHOW_SEQUENCE,
+  USER_INPUT,
+  CHECK_SEQUENCE,
+  GAME_OVER
 } state;
 
 // Variables globales
@@ -32,34 +35,36 @@ int sequence_game[12]; // Secuencia de juego 3 + 9 niveles
 int sequence_user[12]; // Secuencia del usuario 3 + 9 niveles
 int level = 0; // Nivel actual del juego
 state estado; // Estado inicial de la máquina de estados
+volatile uint32_t last_interrupt_time = 0;
+volatile uint16_t debounce_counter = 0; // Contador de desrebote
 
 //////////////////////////////////////
 // FUNCIONES DE CONFIGURACIÓN
 //////////////////////////////////////
 void setup_pins() {
-    // Configura los pines de los LEDs como salidas
-    DDRB |= (1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN);
-    // Inicializa los LEDs apagados
-    PORTB &= ~((1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN));
+  // Configura los pines de los LEDs como salidas
+  DDRB |= (1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN);
+  // Inicializa los LEDs apagados
+  PORTB &= ~((1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN));
 }
 
 void setup_button_interrupts() {
-    // Configura interrupciones externas en INT0 (PB3) e INT1 (PB2)
-    GIMSK |= (1 << INT0) | (1 << INT1) | (1 << PCIE0); // Habilita interrupción externa
-    MCUCR |= (1 << ISC00) | (1 << ISC10); // Interrupción por cualquier cambio en los pines
+  // Configura interrupciones externas en INT0 (PB3) e INT1 (PB2)
+  GIMSK |= (1 << INT0) | (1 << INT1) | (1 << PCIE0); // Habilita interrupción externa
+  MCUCR |= (1 << ISC00) | (1 << ISC10); // Interrupción por cualquier cambio en los pines
 
-    PCMSK |= (1 << PCINT0); // Habilita la interrupción para el pin PB0 (botón verde)
+  PCMSK |= (1 << PCINT0); // Habilita la interrupción para el pin PB0 (botón verde)
 }
 
 void setup_timer0() {
-    // Configuración del Timer0 en modo CTC (Clear Timer on Compare Match)
-    TCCR0A |= (1 << WGM01); // Modo CTC
-    // Prescaler de 1024 para el temporizador
-    TCCR0B |= (1 << CS00) | (1 << CS02);
-    // Valor de comparación para generar interrupciones cada 200 ms
-    OCR0A = 100; // Basado en un reloj de 1 MHz y prescaler de 1024
-    // Habilita las interrupciones por comparación
-    TIMSK |= (1 << OCIE0A);
+  // Configuración del Timer0 en modo CTC (Clear Timer on Compare Match)
+  TCCR0A |= (1 << WGM01); // Modo CTC
+  // Prescaler de 1024 para el temporizador
+  TCCR0B |= (1 << CS00) | (1 << CS02);
+  // Valor de comparación para generar interrupciones cada 200 ms
+  OCR0A = 100; // Basado en un reloj de 1 MHz y prescaler de 1024
+  // Habilita las interrupciones por comparación
+  TIMSK |= (1 << OCIE0A);
 }
 
 //////////////////////////////////////
@@ -67,42 +72,54 @@ void setup_timer0() {
 //////////////////////////////////////
 // ISR del temporizador para manejar los LEDs
 ISR(TIMER0_COMPA_vect) {
-    contador++;
+  if (debounce_counter > 0) {
+    debounce_counter--;
+  }
+  contador++;
 }
 
 // Interrupción del botón rojo (INT0)
 ISR(INT0_vect) {
-    if (contador > 50) {
+  if (contador > 50) { //Evita rebote inicial
+    if (debounce_counter == 0) {
+      debounce_counter = DEBOUNCE_TIME; // Inicia el desrebote
       button_red_pressed = 1; // Marca que se presionó el botón rojo
     }
+  }
 }
 
 // Interrupción del botón azul (INT1)
 ISR(INT1_vect) {
-    if (contador > 50) {
-        button_blue_pressed = 1; // Marca que se presionó el botón azul
+  if (contador > 50) {
+    if (debounce_counter == 0) {
+      debounce_counter = DEBOUNCE_TIME; // Inicia el desrebote
+       button_blue_pressed = 1; // Marca que se presionó el botón rojo
     }
+  }
 }
 
 // Interrupción del botón verde (PCINT0)
 ISR(PCINT0_vect) {
-    if (contador > 50) {
-        button_green_pressed = 1; // Marca que se presionó el botón verde
+  if (contador > 50) {
+    if (debounce_counter == 0) {
+      debounce_counter = DEBOUNCE_TIME; // Inicia el desrebote
+      button_green_pressed = 1; // Marca que se presionó el botón rojo
     }
+  }
 }
 
 //////////////////////////////////////
 // FUNCIONES
 //////////////////////////////////////
-void all_leds_on() {
-    PORTB |= (1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN);
+void all_leds_on() { // Enciende todos los LEDs
+  PORTB |= (1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN);
 }
 
-void all_leds_off() {
-    PORTB &= ~((1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN));
+void all_leds_off() { // Apaga todos los LEDs
+  PORTB &= ~((1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN));
 }
 
-void led_blink(int led) {
+void led_blink(int led) { // Parpadea un LED
   contador = 0;
   while (contador < 200) {
     if (contador < 100) { // 1 segundo ha pasado (5 x 200 ms)
@@ -115,19 +132,18 @@ void led_blink(int led) {
   contador = 0;
 }
 
-void generate_sequence(int* sequence_game, int level) {
-    // Genera una secuencia aleatoria de 3 + 6 niveles
-    for (int i = 0; i < 3 + level; i++) {
-        sequence_game[i] = rand() % 3; // Números aleatorios entre 0 y 2
-    }
+void generate_sequence(int* sequence_game, int level) { // Genera una secuencia aleatoria de 3 + 6 niveles
+  for (int i = 0; i < 3 + level; i++) {
+    sequence_game[i] = rand() % 3; // Números aleatorios entre 0 y 2
+  }
 }
 
-void show_sequence(int* sequence_game, int level) {
-    for (int i = 0; i < 2 + level; i++) {
-        // Apaga todos los LEDs
-        all_leds_off();
-        contador = 0;
-        while(contador<TWO_SECONDS -level*TWO_MILI_SECONDS){
+void show_sequence(int* sequence_game, int level) { // Muestra la secuencia de juego
+  for (int i = 0; i < 2 + level; i++) {
+    // Apaga todos los LEDs
+    all_leds_off();
+    contador = 0;
+    while(contador<TWO_SECONDS -level*TWO_MILI_SECONDS){
           // Enciende el LED correspondiente
           if (sequence_game[i] == 0) {
             PORTB |= (1 << LED_RED);
@@ -148,7 +164,7 @@ void show_sequence(int* sequence_game, int level) {
     all_leds_off();
 }
 
-void user_input(int* sequence_user, int level) {
+void user_input(int* sequence_user, int level) { // Captura la secuencia del usuario
     // Espera a que el usuario presione un botón
     int cuenta_maxima = 0;
   while (cuenta_maxima < 2+level) {
@@ -173,7 +189,7 @@ void user_input(int* sequence_user, int level) {
   }
 }
 
-void check_sequence(int* sequence_game, int* sequence_user, int level) {
+void check_sequence(int* sequence_game, int* sequence_user, int level) { // Compara la secuencia del juego con la secuencia del usuario
     // Compara la secuencia del juego con la secuencia del usuario
     for (int i = 0; i < 2 + level; i++) {
         if (sequence_game[i] != sequence_user[i]) {
