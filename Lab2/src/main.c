@@ -10,7 +10,8 @@
 #define LED_RED PB7
 #define LED_BLUE PB6
 #define LED_GREEN PB5
-
+#define TWO_SECONDS 266 
+#define TWO_MILI_SECONDS 29
 // Definición de estados
 typedef enum {
     WAITING,
@@ -112,7 +113,7 @@ void show_sequence(int* sequence_game, int level) {
         // Apaga todos los LEDs
         all_leds_off();
         contador = 0;
-        while(contador<100){
+        while(contador<TWO_SECONDS -level*TWO_MILI_SECONDS){
           // Enciende el LED correspondiente
           if (sequence_game[i] == 0) {
             PORTB |= (1 << LED_RED);
