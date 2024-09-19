@@ -10,7 +10,7 @@
 #define LED_RED PB7
 #define LED_BLUE PB6
 #define LED_GREEN PB5
-#define TWO_SECONDS 266 
+#define TWO_SECONDS 266
 #define TWO_MILI_SECONDS 29
 // Definición de estados
 typedef enum {
@@ -28,7 +28,7 @@ int contador = 0; // Contador de tiempo
 int button_red_pressed = 0;   // Variable para indicar si se presionó el botón rojo
 int button_blue_pressed = 0;  // Variable para indicar si se presionó el botón azul
 int button_green_pressed = 0; // Variable para indicar si se presionó el botón verde
-int sequence_game[9]; // Secuencia de juego 3 + 6 niveles
+int sequence_game[12]; // Secuencia de juego 3 + 9 niveles
 int level = 0; // Nivel actual del juego
 state estado; // Estado inicial de la máquina de estados
 
@@ -126,6 +126,9 @@ void show_sequence(int* sequence_game, int level) {
           }
         }
         contador = 0;
+        while(contador<TWO_SECONDS -level*TWO_MILI_SECONDS){
+          all_leds_off();
+        }
     }
     // Apaga todos los LEDs después de mostrar la secuencia
     all_leds_off();
@@ -159,14 +162,11 @@ void FSM() {
       break;
 
       case GENERATE_SEQUENCE:
-        //generate_sequence(sequence_game, level);
+        generate_sequence(sequence_game, level);
         estado = SHOW_SEQUENCE;
       break;
 
       case SHOW_SEQUENCE:
-      sequence_game[0] = 0;
-      sequence_game[1] = 1;
-      sequence_game[2] = 2;
         show_sequence(sequence_game, level);
         estado = USER_INPUT;
       break;
@@ -183,7 +183,7 @@ int main() {
     setup_timer0();      // Configura el temporizador
     contador = 0;        // Inicializa el contador de tiempo
     estado = WAITING;    // Inicializa la máquina de estados
-    level = 0;           // Inicializa el nivel del juego
+    level = 0;           // Inicializa el nivel del juego ()
     srand(time(NULL));   // Inicializa la semilla para números aleatorios
 
     while (1) {
