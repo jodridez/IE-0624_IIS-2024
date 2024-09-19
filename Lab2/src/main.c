@@ -205,6 +205,15 @@ void check_sequence(int* sequence_game, int* sequence_user, int level) { // Comp
 void FSM() {
     switch (estado) {
       case WAITING:
+
+        level = 0; // Reinicia el nivel del juego
+        for (int i = 0; i < 11; i++) {
+            sequence_game[i] = 0; // Asigna cero a cada elemento del vector
+        }
+
+        for (int i = 0; i < 11; i++) {
+            sequence_user[i] = 0; // Asigna cero a cada elemento del vector
+        }
         // Espera a que se presione un botón
         if (button_red_pressed || button_blue_pressed || button_green_pressed) {
           contador = 0;
@@ -262,7 +271,7 @@ void FSM() {
                 }
                   contador = 0;
               }
-        level = 0; // Reinicia el nivel del juego
+
         estado = WAITING;
 
       
