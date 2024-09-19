@@ -1,27 +1,8 @@
-/*
-Universidad de Costa Rica
-Escuela de Ingenieria Electrica
-
-IE-0624 Laboratorio de Microcontroladores
-
-main.c
-
-Autores: Jonathan Rodriguez Hernandez <jonathan.rodriguezhernandez@ucr.ac.cr>.
-
-Carnets: B76490.
-         
-Fecha: 18/9/2024.
-
-Descripcion:
-Desarrolla un juego de memoria llamado Simon dice, utilizando 3 leds, 3 botones y el microcontrolador ATtiny4313.
-En este juego hay 3 botones que corresponden a 3 LEDs de colores distintos. El objetivo es memorizar una 
-secuencia aleatoria de luces y reproducirla posteriormente. La dificultad aumenta con cada nivel.
-
-Se utiliza un modelo de máquina de estados para la programación del microcontrolador.
-*/
-
 #include <avr/io.h>        // Librería para manejo de puertos
 #include <avr/interrupt.h> // Librería para manejo de interrupciones
+#include <stdlib.h>        // Librería para funciones de utilidad
+#include <time.h>          // Librería para funciones de tiempo
+#include <util/delay.h>    // Librería para retardos
 
 //////////////////////////////////////
 // DEFINICIONES
@@ -34,6 +15,7 @@ Se utiliza un modelo de máquina de estados para la programación del microcontr
 typedef enum {
     WAITING,
     INIT,
+    GENERATE_SEQUENCE,
     SHOW_SEQUENCE,
     USER_INPUT,
     CHECK_SEQUENCE,
@@ -45,6 +27,8 @@ int contador = 0; // Contador de tiempo
 int button_red_pressed = 0;   // Variable para indicar si se presionó el botón rojo
 int button_blue_pressed = 0;  // Variable para indicar si se presionó el botón azul
 int button_green_pressed = 0; // Variable para indicar si se presionó el botón verde
+int sequence_game[9]; // Secuencia de juego 3 + 6 niveles
+int level = 0; // Nivel actual del juego
 state estado; // Estado inicial de la máquina de estados
 
 //////////////////////////////////////
@@ -86,24 +70,25 @@ ISR(TIMER0_COMPA_vect) {
 
 // Interrupción del botón rojo (INT0)
 ISR(INT0_vect) {
-    if (contador>50){
-    button_red_pressed = 1; // Marca que se presionó el botón rojo
+    if (contador > 50) {
+        button_red_pressed = 1; // Marca que se presionó el botón rojo
     }
 }
 
 // Interrupción del botón azul (INT1)
 ISR(INT1_vect) {
-    if (contador>50){
-    button_blue_pressed = 1; // Marca que se presionó el botón azul
+    if (contador > 50) {
+        button_blue_pressed = 1; // Marca que se presionó el botón azul
     }
 }
 
 // Interrupción del botón verde (PCINT0)
 ISR(PCINT0_vect) {
-    if (contador>50){
-    button_green_pressed = 1; // Marca que se presionó el botón verde
+    if (contador > 50) {
+        button_green_pressed = 1; // Marca que se presionó el botón verde
     }
 }
+
 //////////////////////////////////////
 // FUNCIONES
 //////////////////////////////////////
@@ -115,36 +100,78 @@ void all_leds_off() {
     PORTB &= ~((1 << LED_RED) | (1 << LED_BLUE) | (1 << LED_GREEN));
 }
 
+void generate_sequence(int* sequence_game, int level) {
+    // Genera una secuencia aleatoria de 3 + 6 niveles
+    for (int i = 0; i < 3 + level; i++) {
+        sequence_game[i] = rand() % 3; // Números aleatorios entre 0 y 2
+    }
+}
+
+void show_sequence(int* sequence_game, int level) {
+    for (int i = 0; i < 3 + level; i++) {
+        // Apaga todos los LEDs
+        all_leds_off();
+        contador = 0;
+        while(contador<100){
+          // Enciende el LED correspondiente
+          if (sequence_game[i] == 0) {
+            PORTB |= (1 << LED_RED);
+          } 
+          if (sequence_game[i] == 1) {
+            PORTB |= (1 << LED_BLUE);
+          }
+          if (sequence_game[i] == 2) {
+            PORTB |= (1 << LED_GREEN);
+          }
+        }
+        contador = 0;
+    }
+    // Apaga todos los LEDs después de mostrar la secuencia
+    all_leds_off();
+}
+
+
 // Función para manejar la máquina de estados
 void FSM() {
     switch (estado) {
-    case WAITING:
+      case WAITING:
         // Espera a que se presione un botón
-        if (contador>400){
-          if (button_red_pressed || button_blue_pressed || button_green_pressed) {
-            contador = 0;
-            estado = INIT;
-          }
-        } 
-        break;
+        if (button_red_pressed || button_blue_pressed || button_green_pressed) {
+          contador = 0;
+          estado = INIT;
+        }
+      break;
 
-    case INIT:
+      case INIT:
         for (int i = 0; i < 2; i++) {
-            while (contador < 200) {
-                if (contador < 100) { // 1 segundo ha pasado (5 x 200 ms)
-                    all_leds_on(); // Enciende todos los LEDs
-                }
-                if (contador >= 100 && contador < 200) { // 2 segundos han pasado (10 x 200 ms)
-                    all_leds_off(); // Apaga todos los LEDs
-                }
+          while (contador < 200) {
+            if (contador < 100) { // 1 segundo ha pasado (5 x 200 ms)
+              all_leds_on(); // Enciende todos los LEDs
             }
+            if (contador >= 100 && contador < 200) { // 2 segundos han pasado (10 x 200 ms)
+              all_leds_off(); // Apaga todos los LEDs
+            }
+          }
             contador = 0;
         }
-        estado = SHOW_SEQUENCE;
-        break;
+        estado = GENERATE_SEQUENCE; // Cambiar a GENERATE_SEQUENCE para crear una nueva secuencia
+      break;
 
-    default:
-        break;
+      case GENERATE_SEQUENCE:
+        //generate_sequence(sequence_game, level);
+        estado = SHOW_SEQUENCE;
+      break;
+
+      case SHOW_SEQUENCE:
+      sequence_game[0] = 0;
+      sequence_game[1] = 1;
+      sequence_game[2] = 2;
+        show_sequence(sequence_game, level);
+        estado = USER_INPUT;
+      break;
+
+      default:
+          break;
     }
 }
 
@@ -155,6 +182,8 @@ int main() {
     setup_timer0();      // Configura el temporizador
     contador = 0;        // Inicializa el contador de tiempo
     estado = WAITING;    // Inicializa la máquina de estados
+    level = 0;           // Inicializa el nivel del juego
+    srand(time(NULL));   // Inicializa la semilla para números aleatorios
 
     while (1) {
         FSM(); // Ejecuta la máquina de estados
