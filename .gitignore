@@ -6,4 +6,5 @@
 *.lst
 *.o
 *.asm
+*.bin
 Lab1/lab1_remake.simu
