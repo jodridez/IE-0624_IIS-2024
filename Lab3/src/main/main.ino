@@ -83,7 +83,7 @@ void print_V( int modo, int line, String Vstring, float V){
     lcd.print(Vstring);
     lcd.print(V);
     lcd.setCursor(995, line);
-    lcd.print("V");
+    lcd.print("V   ");
   }
 }
 
