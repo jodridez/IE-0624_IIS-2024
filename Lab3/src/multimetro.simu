@@ -312,6 +312,10 @@ Unique  Id: Node-1153:
 Circuit Id: Node-1153
 <item labelx="-16" objectName="Node-1153" circPos="0,0" labelrot="0" labely="-24" id="Node-1153" rotation="0" valLabRot="0" x="420" itemtype="Node" boardPos="-1e+06,-1e+06" hflip="1" valLabely="0" vflip="1" boardRot="-1e+06" mainComp="false" Show_id="false" valLabelx="0" circRot="8.622305503969882e-308" y="396"/>
 
+Unique  Id: SerialPort-1213: 
+Circuit Id: SerialPort-1213
+<item DataBits="8" Port_Name="" labelx="-34" objectName="SerialPort-1213" circPos="0,0" labelrot="0" Parity="0" labely="-20" Mcu_Uart="1" id="SerialPort-1213" rotation="0" Mcu_Id="Arduino Uno-213" FlowControl="0" valLabRot="0" Auto_Open="false" BaudRate="9600" x="200" itemtype="SerialPort" boardPos="-1e+06,-1e+06" StopBits="1" hflip="1" valLabely="0" vflip="1" boardRot="-1e+06" mainComp="false" Show_id="false" valLabelx="0" circRot="-2.9470680420955124e+79" y="744"/>
+
 Unique  Id: Connector-224: 
 Circuit Id: Connector-224
 <item labelx="-16" objectName="Connector-224" startpinid="Pcd8544-212-PinScl" circPos="0,0" labelrot="0" labely="-24" pointList="116,496,116,524,184,524" id="Connector-224" rotation="0" valLabRot="0" x="116" itemtype="Connector" boardPos="-1e+06,-1e+06" hflip="1" valLabely="0" vflip="1" boardRot="-1e+06" mainComp="false" endpinid="Arduino Uno-213-PD3" enodeid="Circ_eNode-1154" Show_id="false" valLabelx="0" circRot="2.3903655223501722e-256" y="496"/>

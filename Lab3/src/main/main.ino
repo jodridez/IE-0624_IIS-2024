@@ -52,7 +52,8 @@ float V4; // Valor de la tension V4
 /*
   Declaracion de estados de los switches
 */
- int modo;  // AC o DC
+ int modo_tension;  // AC o DC
+ int modo_serial; // Comunicacion serial
 /*
 
 Instancia de la pantalla LCD
@@ -144,6 +145,56 @@ void leds(int LED_PIN, float V) {
   }
 }
 
+// Gestiona la comunicacion serial
+void comunicacion_serial(int modo_serial, int modo_tension, float V1, float V2, float V3, float V4) {
+  // Falta implementar
+  if (modo_serial == 1 && modo_tension == 0) {
+    Serial.println();
+    Serial.print("V1: ");
+    Serial.print(V1);
+    Serial.print(" Vrms ");
+    Serial.println();
+
+    Serial.print("V2: ");
+    Serial.print(V2);
+    Serial.print(" Vrms ");
+    Serial.println();
+
+    Serial.print("V3: ");
+    Serial.print(V3);
+    Serial.print(" Vrms ");
+    Serial.println();
+
+    Serial.print("V4: ");
+    Serial.print(V4);
+    Serial.print(" Vrms ");
+    Serial.println();
+  } else if (modo_serial == 1 && modo_tension == 1) {
+    Serial.println();
+    Serial.print("V1: ");
+    Serial.print(V1);
+    Serial.print(" V ");
+    Serial.println();
+
+    Serial.print("V2: ");
+    Serial.print(V2);
+    Serial.print(" V ");
+    Serial.println();
+
+    Serial.print("V3: ");
+    Serial.print(V3);
+    Serial.print(" V ");
+    Serial.println();
+
+    Serial.print("V4: ");
+    Serial.print(V4);
+    Serial.print(" V ");
+    Serial.println();
+  } else if (modo_serial == 0) {
+    return 0;
+  }
+}
+
 
 /////////////////////////////////////////
 //Funcion principal
@@ -159,14 +210,21 @@ void setup() {
 
   pinMode(MODO_PIN, INPUT);
   pinMode(COMUNICACION_PIN, INPUT);
+
+  Serial.begin(9600); // Iniciar la comunicacion serial
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   if(digitalRead(MODO_PIN) == HIGH){
-    modo = 1; // Modo DC
+    modo_tension = 1; // Modo DC
   } else {
-    modo = 0; // Modo AC
+    modo_tension = 0; // Modo AC
+  }
+  if(digitalRead(COMUNICACION_PIN) == HIGH){
+    modo_serial = 1; // Comunicacion serial
+  } else {
+    modo_serial = 0; // Sin comunicacion serial
   }
 
   // Leer las tensiones
@@ -175,7 +233,8 @@ void loop() {
   V3 = tension(V3_PIN);
   V4 = tension(V4_PIN);
 
-  pantalla_lcd(V1, V2, V3, V4, modo); // Modo DC
+  pantalla_lcd(V1, V2, V3, V4, modo_tension);
+  comunicacion_serial(modo_serial, modo_tension, V1, V2, V3, V4); // Comunicacion serial
 
   // Gestionar los LEDs
   leds(LED1_PIN, V1);
