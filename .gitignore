@@ -11,4 +11,5 @@
 *_backup.simu
 *.ino.eep
 *.ino.elf
+*.csv
 Lab1/lab1_remake.simu
