@@ -126,18 +126,13 @@ void limpiar_pantalla(bool limpiar){
 }
 
 // Convierte el valor leido a tension
-float tension(int PIN, int modo)
+float tension(int PIN)
 { 
   float valor_leido = analogRead(PIN);
   float tension_condicionada = (valor_leido * 5) / 1023.0;
   float tension = ((tension_condicionada) / 4.99) * 48 - 24; 
   
-  if(modo == 0){
-    return tension; //AC
-  }
-  if(modo == 1){
-    return tension_condicionada; //DC
-  }
+  return tension; //AC
 }
 
 // Gestiona los LEDs
@@ -175,10 +170,10 @@ void loop() {
   }
 
   // Leer las tensiones
-  V1 = tension(V1_PIN, modo);
-  V2 = tension(V2_PIN, modo);
-  V3 = tension(V3_PIN, modo);
-  V4 = tension(V4_PIN, modo);
+  V1 = tension(V1_PIN);
+  V2 = tension(V2_PIN);
+  V3 = tension(V3_PIN);
+  V4 = tension(V4_PIN);
 
   pantalla_lcd(V1, V2, V3, V4, modo); // Modo DC
 
