@@ -1,16 +1,12 @@
 <circuit reactStep="50" Speed_per="100" noLinAcc="5" Speed_sps="1000000" type="simulide_0.4" animate="0" Simu_Step_nS="1000">
 
-Unique  Id: Probe-1852: 
-Circuit Id: Probe-1852
-<item valLabelx="16" labelrot="45" boardPos="-1e+06,-1e+06" Show_id="false" vflip="1" labelx="16" hflip="1" boardRot="-1e+06" labely="-16" valLabely="0" mainComp="false" x="136" circPos="0,0" objectName="Probe-1852" rotation="-45" y="372" valLabRot="45" id="Probe-1852" Show_volt="true" Threshold="2.5" circRot="-5.486129280331905e+303" itemtype="Probe"/>
-
 Unique  Id: TextComponent-1764: 
 Circuit Id: TextComponent-1757
 <item valLabelx="0" Font="Helvetica [Cronyx]" Font_Size="10" labelrot="0" boardPos="-1e+06,-1e+06" Border="1" Show_id="false" vflip="1" labelx="-16" hflip="1" boardRot="-1e+06" labely="-24" valLabely="0" mainComp="false" x="-40" circPos="0,0" Margin="5" Text="PANTALLA" objectName="TextComponent-1764" rotation="0" y="428" Opacity="1" valLabRot="0" id="TextComponent-1757" circRot="1.3497996055646044e-202" Fixed_Width="true" itemtype="TextComponent"/>
 
 Unique  Id: TextComponent-1763: 
 Circuit Id: TextComponent-1762
-<item valLabelx="0" Font="Helvetica [Cronyx]" Font_Size="10" labelrot="0" boardPos="-1e+06,-1e+06" Border="1" Show_id="false" vflip="1" labelx="-16" hflip="1" boardRot="-1e+06" labely="-24" valLabely="0" mainComp="false" x="12" circPos="0,0" Margin="5" Text="SWITCH COMUNICACION &#xa;PC" objectName="TextComponent-1763" rotation="0" y="752" Opacity="1" valLabRot="0" id="TextComponent-1762" circRot="1.3664790833655817e-202" Fixed_Width="true" itemtype="TextComponent"/>
+<item valLabelx="0" Font="Helvetica [Cronyx]" Font_Size="10" labelrot="0" boardPos="-1e+06,-1e+06" Border="1" Show_id="false" vflip="1" labelx="-16" hflip="1" boardRot="-1e+06" labely="-24" valLabely="0" mainComp="false" x="24" circPos="0,0" Margin="5" Text="SWITCH COMUNICACION &#xa;PC" objectName="TextComponent-1763" rotation="0" y="744" Opacity="1" valLabRot="0" id="TextComponent-1762" circRot="1.3664790833655817e-202" Fixed_Width="true" itemtype="TextComponent"/>
 
 Unique  Id: TextComponent-1762: 
 Circuit Id: TextComponent-1762
@@ -18,7 +14,7 @@ Circuit Id: TextComponent-1762
 
 Unique  Id: TextComponent-1760: 
 Circuit Id: TextComponent-1757
-<item valLabelx="0" Font="Helvetica [Cronyx]" Font_Size="10" labelrot="0" boardPos="-1e+06,-1e+06" Border="1" Show_id="false" vflip="1" labelx="-16" hflip="1" boardRot="-1e+06" labely="-24" valLabely="0" mainComp="false" x="252" circPos="0,0" Margin="5" Text="CONDICIONAMIENTO DE 0 A 5 V" objectName="TextComponent-1760" rotation="0" y="-96" Opacity="1" valLabRot="0" id="TextComponent-1757" circRot="1.3497996055646044e-202" Fixed_Width="true" itemtype="TextComponent"/>
+<item valLabelx="0" Font="Helvetica [Cronyx]" Font_Size="10" labelrot="0" boardPos="-1e+06,-1e+06" Border="1" Show_id="false" vflip="1" labelx="-16" hflip="1" boardRot="-1e+06" labely="-24" valLabely="0" mainComp="false" x="248" circPos="0,0" Margin="5" Text="CONDICIONAMIENTO DE 0 A 5 V" objectName="TextComponent-1760" rotation="0" y="-84" Opacity="1" valLabRot="0" id="TextComponent-1757" circRot="1.3497996055646044e-202" Fixed_Width="true" itemtype="TextComponent"/>
 
 Unique  Id: Line-1759: 
 Circuit Id: Line-1759
