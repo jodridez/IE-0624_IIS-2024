@@ -4,7 +4,7 @@ Escuela de Ingenieria Electrica
 
 IE-0624 Laboratorio de Microcontroladores
 
-main.ino.hex
+main.ino
 
 Autor: Jonathan Rodriguez Hernandez <jonathan.rodriguezhernandez@ucr.ac.cr>.
 Carnet: B76490.
@@ -14,6 +14,7 @@ Descripcion:
   Programa arduino, que utiliza la pantalla LCD PCD8544, para mostrar 4 valores de tensiones AC o DC en un rango de [-24, 24] V.
   Los valores de tensiones analogicas son leidos de los pines A0, A1, A2 y A3.
   Los valores de tensiones analogicas se muestran en la pantalla LCD PCD8544.
+  Los valores de tensiones analogicas se envian en el puerto serial.
 */
 
 #include <PCD8544.h> // Para utilizar la pantalla LCD PCD8544
@@ -39,7 +40,6 @@ Descripcion:
 
 #define MODO_PIN 9 // Puerto digital para el switch de modo AC/DC
 #define COMUNICACION_PIN 10 // Puerto digital para la comunicacion serial
-/*
 
 /*
  Declaracion tensiones
@@ -54,8 +54,8 @@ float V4; // Valor de la tension V4
 */
  int modo_tension;  // AC o DC
  int modo_serial; // Comunicacion serial
-/*
 
+/*
 Instancia de la pantalla LCD
 */
 PCD8544 lcd;
@@ -64,18 +64,13 @@ PCD8544 lcd;
 //Funciones de configuracion
 /////////////////////////////////////////
 
-void setup_lcd(){
-  lcd.begin();
-  lcd.setContrast(60);
-
-}
-//Funcion para evitar mucho copy-paste. genera la estructura para inmprimir en pantalla
+//Funcion para evitar mucho copy-paste, genera la estructura para inmprimir en pantalla
 void print_V( int modo, int line, String Vstring, float V){
   if(modo == 0){
-    //float Vrms = V / sqrt(2);
+    float Vrms = V / sqrt(2); // Valor de la tension en Vrms
     lcd.setCursor(0, line);
     lcd.print(Vstring);
-    lcd.print(V);
+    lcd.print(Vrms);
     lcd.setCursor(995, line);
     lcd.print("Vrms");
   }
@@ -117,13 +112,6 @@ void pantalla_lcd(float V1, float V2, float V3, float V4, int modo) {
     // [V4] Mostrar el valor de la tension V4
     print_V(modo, 4, "V4:", V4);
   }
-}
-
-void limpiar_pantalla(bool limpiar){
-  if(!limpiar){
-    lcd.clear();
-  }
-  limpiar = true;
 }
 
 // Convierte el valor leido a tension
@@ -170,9 +158,9 @@ void print_serial(int modo_tension, float V1, float V2, float V3, float V4){
     Serial.println();
   }
 }
+
 // Gestiona la comunicacion serial
 void comunicacion_serial(int modo_serial, int modo_tension, float V1, float V2, float V3, float V4) {
-  // Falta implementar
   if (modo_serial == 1) {
     print_serial(modo_tension, V1, V2, V3, V4);
     print_serial(modo_tension, V1, V2, V3, V4);
@@ -188,8 +176,7 @@ void comunicacion_serial(int modo_serial, int modo_tension, float V1, float V2, 
 //Funcion principal
 /////////////////////////////////////////
 void setup() {
-  // put your setup code here, to run once:
-  setup_lcd();
+  lcd.begin(); // Iniciar la pantalla LCD
   // Configurar los pines de los LEDs
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
@@ -203,15 +190,13 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
   if(digitalRead(MODO_PIN) == HIGH){
     modo_tension = 1; // Modo DC
-    delay(500); 
   } else {
     modo_tension = 0; // Modo AC
-    delay(100);
   }
-  if(digitalRead(COMUNICACION_PIN) == HIGH){
+
+  if(digitalRead(COMUNICACION_PIN) == HIGH){ //
     modo_serial = 1; // Comunicacion serial
   } else {
     modo_serial = 0; // Sin comunicacion serial
@@ -223,7 +208,7 @@ void loop() {
   V3 = tension(V3_PIN);
   V4 = tension(V4_PIN);
 
-  pantalla_lcd(V1, V2, V3, V4, modo_tension);
+  pantalla_lcd(V1, V2, V3, V4, modo_tension); // Configurar la impresion en pantalla LCD
   comunicacion_serial(modo_serial, modo_tension, V1, V2, V3, V4); // Comunicacion serial
 
   // Gestionar los LEDs
@@ -231,4 +216,6 @@ void loop() {
   leds(LED2_PIN, V2);
   leds(LED3_PIN, V3);
   leds(LED4_PIN, V4);
+  
+  delay(100); //Delay para no sobreponer mediciones
 }
