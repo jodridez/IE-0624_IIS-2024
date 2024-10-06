@@ -24,23 +24,18 @@ Descripcion:
 /*
  Declaracion de puertos analogicos
 */
-#define V1_pin A3 // Puerto analogico para la tension V1
-#define V2_pin A2 // Puerto analogico para la tension V2
-#define V3_pin A1 // Puerto analogico para la tension V3
-#define V4_pin A0 // Puerto analogico para la tension V4
+#define V1_PIN A3 // Puerto analogico para la tension V1
+#define V2_PIN A2 // Puerto analogico para la tension V2
+#define V3_PIN A1 // Puerto analogico para la tension V3
+#define V4_PIN A0 // Puerto analogico para la tension V4
 
 /*
- Declaracion de constantes
+ Definicion de puertos digitales
 */
-#define V1_MAX 20 // Valor maximo de la tension V1
-#define V2_MAX 20 // Valor maximo de la tension V2
-#define V3_MAX 20 // Valor maximo de la tension V3
-#define V4_MAX 20 // Valor maximo de la tension V4
-
-#define V1_MIN -20 // Valor minimo de la tension V1
-#define V2_MIN -20 // Valor minimo de la tension V2
-#define V3_MIN -20 // Valor minimo de la tension V3
-#define V4_MIN -20 // Valor minimo de la tension V4
+#define LED1_PIN 0 // Puerto digital para el led 1 
+#define LED2_PIN 1 // Puerto digital para el led 2
+#define LED3_PIN 2 // Puerto digital para el led 3
+#define LED4_PIN 8 // Puerto digital para el led 4
 
 /*
  Declaracion tensiones
@@ -50,7 +45,11 @@ float V2; // Valor de la tension V2
 float V3; // Valor de la tension V3
 float V4; // Valor de la tension V4
 
+/*
+Instancia de la pantalla LCD
+*/
 PCD8544 lcd;
+
 /////////////////////////////////////////
 //Funciones de configuracion
 /////////////////////////////////////////
@@ -99,20 +98,46 @@ void pantalla_lcd(float V1, float V2, float V3, float V4, int modo) {
   }
 }
 
+// Convierte el valor leido a tension
+float tension(int PIN)
+{ float valor_leido = analogRead(PIN);
+  float tension_condicionada = (valor_leido * 5) / 1023.0;
+  float tension = ((tension_condicionada - 1.54) / 3.45) * 48 - 24; 
+  return tension;
+}
+
+// Gestiona los LEDs
+void leds(int LED_PIN, float V) {
+  if (V < -20 || V > 20) {
+    digitalWrite(LED_PIN, HIGH);
+  } else {
+    digitalWrite(LED_PIN, LOW);
+  }
+}
+
 void setup() {
   // put your setup code here, to run once:
   lcd.begin();
-  
-
+  pinMode(LED1_PIN, OUTPUT);
+  pinMode(LED2_PIN, OUTPUT);
+  pinMode(LED3_PIN, OUTPUT);
+  pinMode(LED4_PIN, OUTPUT);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  V1 = analogRead(V1_pin);
+  // Leer las tensiones
+  V1 = tension(V1_PIN);
   V2 = 0;
   V3 = 0;
   V4 = 0;
 
+  // Mostrar las tensiones en la pantalla
   pantalla_lcd(V1, V2, V3, V4, 0);
 
+  // Gestionar los LEDs
+  leds(LED1_PIN, V1);
+  leds(LED2_PIN, V2);
+  leds(LED3_PIN, V3);
+  leds(LED4_PIN, V4);
 }
