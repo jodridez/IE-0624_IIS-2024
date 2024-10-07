@@ -14,19 +14,19 @@ Circuit Id: TextComponent-1340
 
 Unique  Id: TextComponent-1341: 
 Circuit Id: TextComponent-1340
-<item y="544" circRot="4.875520199693075e-209" Font="Helvetica [Cronyx]" Fixed_Width="true" valLabelx="0" itemtype="TextComponent" Margin="5" rotation="0" vflip="1" mainComp="false" Font_Size="10" Opacity="1" Show_id="false" id="TextComponent-1340" objectName="TextComponent-1341" valLabRot="0" boardRot="-1e+06" valLabely="0" hflip="1" circPos="0,0" labelrot="0" labely="-24" Border="1" x="-40" Text="ALERTA" boardPos="-1e+06,-1e+06" labelx="-16"/>
+<item y="540" circRot="4.875520199693075e-209" Font="Helvetica [Cronyx]" Fixed_Width="true" valLabelx="0" itemtype="TextComponent" Margin="5" rotation="0" vflip="1" mainComp="false" Font_Size="10" Opacity="1" Show_id="false" id="TextComponent-1340" objectName="TextComponent-1341" valLabRot="0" boardRot="-1e+06" valLabely="0" hflip="1" circPos="0,0" labelrot="0" labely="-24" Border="1" x="-24" Text="ALERTA" boardPos="-1e+06,-1e+06" labelx="-16"/>
 
 Unique  Id: TextComponent-1340: 
 Circuit Id: TextComponent-1340
-<item y="424" circRot="4.875520199693075e-209" Font="Helvetica [Cronyx]" Fixed_Width="true" valLabelx="0" itemtype="TextComponent" Margin="5" rotation="0" vflip="1" mainComp="false" Font_Size="10" Opacity="1" Show_id="false" id="TextComponent-1340" objectName="TextComponent-1340" valLabRot="0" boardRot="-1e+06" valLabely="0" hflip="1" circPos="0,0" labelrot="0" labely="-24" Border="1" x="-76" Text="PANTALLA" boardPos="-1e+06,-1e+06" labelx="-16"/>
+<item y="428" circRot="4.875520199693075e-209" Font="Helvetica [Cronyx]" Fixed_Width="true" valLabelx="0" itemtype="TextComponent" Margin="5" rotation="0" vflip="1" mainComp="false" Font_Size="10" Opacity="1" Show_id="false" id="TextComponent-1340" objectName="TextComponent-1340" valLabRot="0" boardRot="-1e+06" valLabely="0" hflip="1" circPos="0,0" labelrot="0" labely="-24" Border="1" x="-36" Text="PANTALLA" boardPos="-1e+06,-1e+06" labelx="-16"/>
 
 Unique  Id: TextComponent-1338: 
 Circuit Id: TextComponent-1338
-<item y="-84" circRot="2.7016087963760773e-272" Font="Helvetica [Cronyx]" Fixed_Width="true" valLabelx="0" itemtype="TextComponent" Margin="5" rotation="0" vflip="1" mainComp="false" Font_Size="10" Opacity="1" Show_id="false" id="TextComponent-1338" objectName="TextComponent-1338" valLabRot="0" boardRot="-1e+06" valLabely="0" hflip="1" circPos="0,0" labelrot="0" labely="-24" Border="1" x="256" Text="CONDICIONAMIENTON TENSION" boardPos="-1e+06,-1e+06" labelx="-16"/>
+<item y="-84" circRot="2.7016087963760773e-272" Font="Helvetica [Cronyx]" Fixed_Width="true" valLabelx="0" itemtype="TextComponent" Margin="5" rotation="0" vflip="1" mainComp="false" Font_Size="10" Opacity="1" Show_id="false" id="TextComponent-1338" objectName="TextComponent-1338" valLabRot="0" boardRot="-1e+06" valLabely="0" hflip="1" circPos="0,0" labelrot="0" labely="-24" Border="1" x="256" Text="CONDICIONAMIENTO TENSION" boardPos="-1e+06,-1e+06" labelx="-16"/>
 
 Unique  Id: TextComponent-1337: 
 Circuit Id: TextComponent-1337
-<item y="-136" circRot="4.894234069798793e-209" Font="Helvetica [Cronyx]" Fixed_Width="true" valLabelx="0" itemtype="TextComponent" Margin="5" rotation="0" vflip="1" mainComp="false" Font_Size="10" Opacity="1" Show_id="false" id="TextComponent-1337" objectName="TextComponent-1337" valLabRot="0" boardRot="-1e+06" valLabely="0" hflip="1" circPos="0,0" labelrot="0" labely="-24" Border="1" x="-16" Text="CANALES DE TENSION" boardPos="-1e+06,-1e+06" labelx="-16"/>
+<item y="-136" circRot="4.894234069798793e-209" Font="Helvetica [Cronyx]" Fixed_Width="true" valLabelx="0" itemtype="TextComponent" Margin="5" rotation="0" vflip="1" mainComp="false" Font_Size="10" Opacity="1" Show_id="false" id="TextComponent-1337" objectName="TextComponent-1337" valLabRot="0" boardRot="-1e+06" valLabely="0" hflip="1" circPos="0,0" labelrot="0" labely="-24" Border="1" x="-88" Text="CANALES DE TENSION" boardPos="-1e+06,-1e+06" labelx="-16"/>
 
 Unique  Id: Fixed Voltage-1049: 
 Circuit Id: Fixed Voltage-972
