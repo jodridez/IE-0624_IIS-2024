@@ -145,13 +145,17 @@ void leds(int LED_PIN, float V) {
 // Configura la impresion en puerto serial, evita copy-paste
 void print_serial(int modo_tension, float V1, float V2, float V3, float V4){
   if(modo_tension == 0){
-    Serial.print(V1);
+    float Vrms1 = V1 / sqrt(2); // Calculo de la tension eficaz
+    float Vrms2 = V2 / sqrt(2); // Calculo de la tension eficaz
+    float Vrms3 = V3 / sqrt(2); // Calculo de la tension eficaz
+    float Vrms4 = V4 / sqrt(2); // Calculo de la tension eficaz
+    Serial.print(Vrms1);
     Serial.print(" "); // Espacio
-    Serial.print(V2);
+    Serial.print(Vrms2);
     Serial.print(" "); // Espacio
-    Serial.print(V3);
+    Serial.print(Vrms3);
     Serial.print(" "); // Espacio
-    Serial.print(V4);
+    Serial.print(Vrms4);
     Serial.print(" Vrms");
     Serial.println();
   }
