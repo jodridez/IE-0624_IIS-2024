@@ -56,9 +56,14 @@ const float CONVERSION_FACTOR = 58.0;  // Factor para convertir el tiempo de pul
 const int DISTANCIA_MAXIMA = 400;  // Distancia maxima que se considerara valida (400 cm)
 const int DISTANCIA_MINIMA = 2;  // Distancia mínima que se considerara valida (2 cm)
 
+const int ancho_puerta = 100; // Ancho de la puerta en cm
+
 // Variables para almacenar la distancia de los sensores
 int distanciaEntrada = 0;
 int distanciaSalida = 0;
+
+// Variables para almacenar el monitoreo de las personas
+int personasDentro = 0;
 
 // Funcion para medir la distancia de un sensor de ultrasonido
 int medirDistancia(int trig, int echo) {
@@ -93,6 +98,23 @@ void serializarDatos(int distanciaEntrada, int distanciaSalida) {
     }
 }
 
+//funcion para contar personas
+void contarPersonas(int distanciaEntrada, int distanciaSalida) {
+    if (distanciaEntrada >= DISTANCIA_MINIMA && distanciaEntrada <= DISTANCIA_MAXIMA) { // Si la distancia de entrada es valida
+        if (distanciaEntrada <= ancho_puerta) { // Si la distancia de entrada es menor o igual al ancho de la puerta
+            personasDentro++; // Aumentar el contador de personas dentro
+        }
+    }
+    if (distanciaSalida >= DISTANCIA_MINIMA && distanciaSalida <= DISTANCIA_MAXIMA) { // Si la distancia de salida es valida
+        if (distanciaSalida <= ancho_puerta) { // Si la distancia de salida es menor o igual al ancho de la puerta
+            personasDentro--; // Disminuir el contador de personas dentro
+            if(personasDentro <= 0){ // Si el contador de personas dentro es menor o igual a 0
+              personasDentro = 0; // Establecer el contador de personas dentro a 0
+            }
+        }
+    }
+}
+
 
 // Configuración inicial del sistema
 void setup() {
@@ -111,7 +133,11 @@ void loop() {
     distanciaEntrada = medirDistancia(TRIG_INT, ECHO_INT);
     distanciaSalida = medirDistancia(TRIG_OUT, ECHO_OUT);
     // Serializar los datos
-    serializarDatos(distanciaEntrada, distanciaSalida);
+    //serializarDatos(distanciaEntrada, distanciaSalida);
+    contarPersonas(distanciaEntrada, distanciaSalida);
+    // Mostrar el numero de personas dentro
+    Serial.print("Personas dentro: ");
+    Serial.println(personasDentro);
     // Esperar 1 segundo
     delay(1000);
 }
