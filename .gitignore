@@ -12,4 +12,7 @@
 *.ino.eep
 *.ino.elf
 *.csv
+*.d
+*.elf
+*.map
 Lab1/lab1_remake.simu
