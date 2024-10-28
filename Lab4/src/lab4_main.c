@@ -32,7 +32,7 @@ Caracteristicas:
 #include <stdint.h> // Para definiciones de tipos de datos
 
 #include <math.h> // Para funciones matematicas
- // Librerias de la biblioteca libopencm3
+ // Librerias del ejemplo de lcd-serial
 #include "clock.h" // Para configuracion de reloj
 
 #include "console.h" // Para funciones de consola
@@ -49,6 +49,10 @@ Caracteristicas:
 #include <libopencm3/stm32/gpio.h>
 
 #include <libopencm3/stm32/spi.h>
+
+// Librerias del ejemplo adc-dac-printf
+#include <libopencm3/stm32/adc.h>
+#include <libopencm3/stm32/dac.h>
 
 
 // Definiciones relacionadas con el giroscopio
@@ -109,11 +113,13 @@ void reg_write(uint16_t reg, uint16_t val); // Función para escribir en un regi
 uint8_t reg_read(uint8_t reg); // Función para leer un registro
 
 void gyro_setup(void); // Función para configurar el giroscopio
+//void adc_setup(void); // Función para configurar el ADC  (Convertidor Analógico-Digital)
 void setup(void); // Función para configurar el microcontrolador
 
 int16_t axis_read(uint8_t out_l_reg, uint8_t out_m_reg); // Función para leer un eje del giroscopio
 axis xyz_read(void); // Función para leer valores de los ejes X, Y y Z
 
+//uint16_t read_adc_naiive(uint8_t channel); // Función para leer un canal del ADC
 void display_data(axis measurement, float battery_lvl, bool send); // Función para desplegar los datos en la pantalla LCD
 
 /*///////////////////////////////////////////////////////////////////////////////////////
@@ -188,6 +194,38 @@ void gyro_setup(void) {
   reg_write(CTRL_REG4, BDU | BLE | FS1 | FS0 | SIM);
 }
 
+
+// Función para configurar el ADC (Convertidor Analógico-Digital) extraido de adc-dac-printf.c
+static void adc_setup(void)
+{   
+    rcc_periph_clock_enable(RCC_GPIOA); // Habilita el reloj del puerto A
+    rcc_periph_clock_enable(RCC_ADC1); // Habilita el reloj del ADC1
+
+    // Configura los pines 5 del puerto A como analógicos
+	gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO5);
+	
+    adc_power_off(ADC1); // Apaga el ADC1
+
+	adc_disable_scan_mode(ADC1); // Deshabilita el modo de escaneo del ADC1
+	adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_3CYC); // Configura el tiempo de muestreo en todos los canales del ADC1
+
+	adc_power_on(ADC1); // Enciende el ADC1
+
+}
+
+// Función para leer un canal del ADC (Convertidor Analógico-Digital) extraido de adc-dac-printf.c
+static uint16_t read_adc_naiive(uint8_t channel)
+{
+	uint8_t channel_array[16];
+	channel_array[0] = channel;
+	adc_set_regular_sequence(ADC1, 1, channel_array);
+	adc_start_conversion_regular(ADC1);
+	while (!adc_eoc(ADC1));
+	uint16_t reg16 = adc_read_regular(ADC1);
+	return reg16;
+}
+
+
 // Función para leer un eje del giroscopio, combinando el byte menos significativo (out_l_reg) y el más significativo (out_m_reg)
 int16_t axis_read(uint8_t out_l_reg, uint8_t out_m_reg) {
   return reg_read(out_l_reg) | (reg_read(out_m_reg) << 8);
@@ -259,8 +297,12 @@ void setup(void) {
   sdram_init();
 
   gyro_setup();
+  adc_setup();
   lcd_spi_init();
   gfx_init(lcd_draw_pixel, 240, 320);
+
+  
+    
 
 }
 
@@ -269,16 +311,21 @@ void setup(void) {
 */ //////////////////////////////////////////////////////////////////////////////////////
 int main(void) {
   axis measurement;
-  float battery_lvl;
+  uint16_t input_adc5;
+  uint16_t battery_lvl;
   bool send = false;
+
 
   setup();
 
   // Bucle principal del programa
   while (1) {
-    measurement = xyz_read(); // Lee datos del giroscopio.
+    measurement = xyz_read(); // Lee datos del giroscopio
+    
+    input_adc5 = read_adc_naiive(5); // Lee el canal 5 del ADC
+    battery_lvl = input_adc5;
 
-    battery_lvl = 0;
+
     display_data(measurement, battery_lvl, send); // Muestra la data en la pantalla LCD.
 
     msleep(100); // Espera 100 ms
