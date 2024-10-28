@@ -52,7 +52,7 @@ Caracteristicas:
 
 // Librerias del ejemplo adc-dac-printf
 #include <libopencm3/stm32/adc.h>
-#include <libopencm3/stm32/dac.h>
+
 
 
 // Definiciones relacionadas con el giroscopio
@@ -194,37 +194,33 @@ void gyro_setup(void) {
   reg_write(CTRL_REG4, BDU | BLE | FS1 | FS0 | SIM);
 }
 
-
 // Función para configurar el ADC (Convertidor Analógico-Digital) extraido de adc-dac-printf.c
-static void adc_setup(void)
-{   
-    rcc_periph_clock_enable(RCC_GPIOA); // Habilita el reloj del puerto A
-    rcc_periph_clock_enable(RCC_ADC1); // Habilita el reloj del ADC1
+static void adc_setup(void) {
+  rcc_periph_clock_enable(RCC_GPIOA); // Habilita el reloj del puerto A
+  rcc_periph_clock_enable(RCC_ADC1); // Habilita el reloj del ADC1
 
-    // Configura los pines 5 del puerto A como analógicos
-	gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO5);
-	
-    adc_power_off(ADC1); // Apaga el ADC1
+  // Configura los pines 5 del puerto A como analógicos
+  gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO5);
 
-	adc_disable_scan_mode(ADC1); // Deshabilita el modo de escaneo del ADC1
-	adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_3CYC); // Configura el tiempo de muestreo en todos los canales del ADC1
+  adc_power_off(ADC1); // Apaga el ADC1
 
-	adc_power_on(ADC1); // Enciende el ADC1
+  adc_disable_scan_mode(ADC1); // Deshabilita el modo de escaneo del ADC1
+  adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_3CYC); // Configura el tiempo de muestreo en todos los canales del ADC1
+
+  adc_power_on(ADC1); // Enciende el ADC1
 
 }
 
 // Función para leer un canal del ADC (Convertidor Analógico-Digital) extraido de adc-dac-printf.c
-static uint16_t read_adc_naiive(uint8_t channel)
-{
-	uint8_t channel_array[16];
-	channel_array[0] = channel;
-	adc_set_regular_sequence(ADC1, 1, channel_array);
-	adc_start_conversion_regular(ADC1);
-	while (!adc_eoc(ADC1));
-	uint16_t reg16 = adc_read_regular(ADC1);
-	return reg16;
+static uint16_t read_adc_naiive(uint8_t channel) {
+  uint8_t channel_array[16];
+  channel_array[0] = channel;
+  adc_set_regular_sequence(ADC1, 1, channel_array);
+  adc_start_conversion_regular(ADC1);
+  while (!adc_eoc(ADC1));
+  uint16_t reg16 = adc_read_regular(ADC1);
+  return reg16;
 }
-
 
 // Función para leer un eje del giroscopio, combinando el byte menos significativo (out_l_reg) y el más significativo (out_m_reg)
 int16_t axis_read(uint8_t out_l_reg, uint8_t out_m_reg) {
@@ -240,6 +236,34 @@ axis xyz_read(void) {
   measurement.z = axis_read(OUT_Z_L | READ, OUT_Z_H | READ) * SENSITIVITY;
 
   return measurement; // Devuelve la measurement  de los 3 ejes
+}
+
+//FUNCIONES DEL LED DE ADVERTENCIA DE BATERIA BAJA
+static void led_red_setup(void) {
+  rcc_periph_clock_enable(RCC_GPIOG); // Habilita el reloj del puerto G
+  gpio_mode_setup(GPIOG, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO14); // Configura el pin 5 del puerto G como salida
+}
+
+static void led_red_toggle(float battery_lvl) {
+  if (battery_lvl < 7) {
+    gpio_toggle(GPIOG, GPIO14); // Cambia el estado del pin 5 del puerto G
+  } else {
+    gpio_clear(GPIOG, GPIO14); // Pone en bajo el pin 5 del puerto G
+  }
+}
+
+//FUNCIONES DE LED DE COMUNICACION
+static void led_green_setup(void) {
+  rcc_periph_clock_enable(RCC_GPIOG); // Habilita el reloj del puerto G
+  gpio_mode_setup(GPIOG, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO13); // Configura el pin 6 del puerto G como salida
+}
+
+static void led_greend_blink(bool send) {
+  if (send) {
+    gpio_toggle(GPIOG, GPIO13); // Cambia el estado del pin 6 del puerto G
+  } else {
+    gpio_clear(GPIOG, GPIO13); // Pone en bajo el pin 6 del puerto G
+  }
 }
 
 // Función para mostrar los datos en la pantalla LCD
@@ -298,11 +322,10 @@ void setup(void) {
 
   gyro_setup();
   adc_setup();
+  led_red_setup();
+  led_green_setup();
   lcd_spi_init();
   gfx_init(lcd_draw_pixel, 240, 320);
-
-  
-    
 
 }
 
@@ -315,18 +338,18 @@ int main(void) {
   uint16_t battery_lvl;
   bool send = false;
 
-
   setup();
 
   // Bucle principal del programa
   while (1) {
     measurement = xyz_read(); // Lee datos del giroscopio
-    
+
     input_adc5 = read_adc_naiive(5); // Lee el canal 5 del ADC
     battery_lvl = input_adc5;
 
-
     display_data(measurement, battery_lvl, send); // Muestra la data en la pantalla LCD.
+    led_red_toggle(battery_lvl); // Enciende el LED de advertencia de batería baja
+    led_greend_blink(true); // Enciende el LED verde de comunicación
 
     msleep(100); // Espera 100 ms
   }
