@@ -53,6 +53,8 @@ Caracteristicas:
 // Librerias del ejemplo adc-dac-printf
 #include <libopencm3/stm32/adc.h>
 
+// Librerias usadas en el ejemplo usart
+#include <libopencm3/stm32/usart.h>
 
 
 // Definiciones relacionadas con el giroscopio
@@ -266,6 +268,40 @@ static void led_greend_blink(bool send) {
   }
 }
 
+// Función para configurar el botón, extraido de button.c
+static void botton_setup(void) {
+  rcc_periph_clock_enable(RCC_GPIOA); // Habilita el reloj del puerto A
+  gpio_mode_setup(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO0); // Configura el pin 0 del puerto A como entrada
+}
+
+// Funcion para configurar el USART. Extraido del ejemplo usart.c
+static void usart_setup(void) {
+
+  /* Enable GPIOG clock for LED & USARTs. */
+  rcc_periph_clock_enable(RCC_GPIOG);
+  rcc_periph_clock_enable(RCC_GPIOA);
+
+  /* Enable clocks for USART2. */
+  rcc_periph_clock_enable(RCC_USART1);
+
+  /* Setup GPIO pins for USART1 transmit. */
+  gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO9);
+
+  /* Setup USART1 TX pin as alternate function. */
+  gpio_set_af(GPIOA, GPIO_AF7, GPIO9);
+
+  /* Setup USART2 parameters. */
+  usart_set_baudrate(USART1, 115200);
+  usart_set_databits(USART1, 8);
+  usart_set_stopbits(USART1, USART_STOPBITS_1);
+  usart_set_mode(USART1, USART_MODE_TX);
+  usart_set_parity(USART1, USART_PARITY_NONE);
+  usart_set_flow_control(USART1, USART_FLOWCONTROL_NONE);
+
+  /* Finally enable the USART. */
+  usart_enable(USART1);
+}
+
 // Función para mostrar los datos en la pantalla LCD
 void display_data(axis measurement, float battery_lvl, bool send) {
   char buffer[20];
@@ -302,7 +338,7 @@ void display_data(axis measurement, float battery_lvl, bool send) {
   // Mostrar estado de comunicacion
   gfx_setCursor(0, 8 * enter);
   if (send) {
-    gfx_puts("Comunicacion:ON");
+    gfx_puts("Comunicacion:");
     gfx_setCursor(0, 9 * enter);
     gfx_puts(" ON");
   } else {
@@ -324,6 +360,8 @@ void setup(void) {
   adc_setup();
   led_red_setup();
   led_green_setup();
+  botton_setup();
+  usart_setup();
   lcd_spi_init();
   gfx_init(lcd_draw_pixel, 240, 320);
 
@@ -347,9 +385,15 @@ int main(void) {
     input_adc5 = read_adc_naiive(5); // Lee el canal 5 del ADC
     battery_lvl = input_adc5;
 
+    //Si se presiona el boton, se alterna el estado de 'enviar'
+    if (gpio_get(GPIOA, GPIO0)) {
+      send = !send;
+    }
+
     display_data(measurement, battery_lvl, send); // Muestra la data en la pantalla LCD.
+
     led_red_toggle(battery_lvl); // Enciende el LED de advertencia de batería baja
-    led_greend_blink(true); // Enciende el LED verde de comunicación
+    led_greend_blink(send); // Enciende el LED verde de comunicación
 
     msleep(100); // Espera 100 ms
   }
