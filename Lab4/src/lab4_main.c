@@ -175,16 +175,16 @@ void gyro_setup(void) {
   rcc_periph_clock_enable(RCC_SPI5);
 
   // Configuración de SPI5. Siguiendo la guia
-  spi_set_master_mode(SPI5); 
+  spi_set_master_mode(SPI5);
   spi_set_baudrate_prescaler(SPI5, SPI_CR1_BAUDRATE_FPCLK_DIV_4); // Velocidad de baudios de SPI5. Extraido de spi-mems
-  spi_set_clock_polarity_0(SPI5); 
-  spi_set_clock_phase_0(SPI5); 
-  spi_set_full_duplex_mode(SPI5); 
-  spi_set_unidirectional_mode(SPI5); 
-  spi_enable_software_slave_management(SPI5); 
-  spi_send_msb_first(SPI5); 
-  spi_set_nss_high(SPI5); 
-  spi_enable(SPI5); 
+  spi_set_clock_polarity_0(SPI5);
+  spi_set_clock_phase_0(SPI5);
+  spi_set_full_duplex_mode(SPI5);
+  spi_set_unidirectional_mode(SPI5);
+  spi_enable_software_slave_management(SPI5);
+  spi_send_msb_first(SPI5);
+  spi_set_nss_high(SPI5);
+  spi_enable(SPI5);
 
   //Configuracion de registros del giroscopio
   //Para el registro CTRL_REG1 (Control de ejes y poder)
@@ -200,15 +200,15 @@ static void adc_setup(void) {
   rcc_periph_clock_enable(RCC_GPIOA); // Habilita el reloj del puerto A
   rcc_periph_clock_enable(RCC_ADC1); // Habilita el reloj del ADC1
 
-  // Configura los pines 5 del puerto A como analógicos
-  gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO5);
+  // PIN PA3 MODO ANALOGICO
+  gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO1);
 
-  adc_power_off(ADC1); 
+  adc_power_off(ADC1);
 
-  adc_disable_scan_mode(ADC1); 
-  adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_3CYC); 
+  adc_disable_scan_mode(ADC1);
+  adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_3CYC);
 
-  adc_power_on(ADC1); 
+  adc_power_on(ADC1);
 }
 
 // Lee un canal del ADC (Convertidor Analógico-Digital) extraido de adc-dac-printf.c
@@ -389,17 +389,20 @@ void setup(void) {
 */ //////////////////////////////////////////////////////////////////////////////////////
 int main(void) {
   axis measurement;
-  uint16_t input_adc5;
-  uint16_t battery_lvl;
+  float input_adc5;
+  float battery_lvl;
   bool send = false;
   setup();
+  float R1 = 4700; // Resistencia 1
+  float R2 = 5100; // Resistencia 2
+  float tension_divisor = (R1 + R2) / R2; // Tension de divisor de voltaje
 
   // Bucle principal del programa
   while (1) {
     measurement = xyz_read(); // Lee datos del giroscopio
 
-    input_adc5 = read_adc_naiive(5); // Lee el canal 5 del ADC
-    battery_lvl = input_adc5;
+    input_adc5 = read_adc_naiive(1); // Lee el canal 1 del ADC
+    battery_lvl = (input_adc5 / 6.30) * tension_divisor;
 
     //Si se presiona el boton, se alterna el estado de 'enviar'
     if (gpio_get(GPIOA, GPIO0)) {
@@ -407,12 +410,12 @@ int main(void) {
     }
 
     /// Prueba de USART:
-    send_data(send, measurement, battery_lvl); // Si 'enviar' es verdadero, envía los datos.
+    send_data(send, measurement, battery_lvl); 
 
-    display_data(measurement, battery_lvl, send); // Muestra la data en la pantalla LCD.
+    display_data(measurement, battery_lvl, send); // Imprime los datos en la pantalla LCD
 
-    led_red_toggle(battery_lvl); // Enciende el LED de advertencia de batería baja
-    led_greend_blink(send); // Enciende el LED verde de comunicación
+    led_red_toggle(battery_lvl); // Led de advertencia de bateria baja
+    led_greend_blink(send); // Led de comunicacion
 
     msleep(100); // Espera 100 ms
   }
