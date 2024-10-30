@@ -24,20 +24,23 @@ with serial.Serial(puerto, baudrate, timeout=1) as ser:
             datos = linea.split(',')
             if len(datos) == 5:  # Verifica que haya 5 elementos
                 # Convierte los datos a los tipos apropiados
-                x = float(datos[0])
-                y = float(datos[1])
-                z = float(datos[2])
-                nivel_de_bateria = float(datos[3])
-                estado = int(datos[4])
-                if estado == 1:
-                    alerta = 'Sí'
-                if estado == 0:
-                    alerta = 'No'
-                
-                # Crea un mensaje en formato JSON
-                msg = f'{{"x":{x},"y":{y},"z":{z},"Bateria":{nivel_de_bateria},"Bateria baja":{alerta}}}'
-                
-                # Publica el mensaje en el tópico
-                client.publish(topic_pub, msg)
+                try:
+                    x = float(datos[0])
+                    y = float(datos[1])
+                    z = float(datos[2])
+                    nivel_de_bateria = float(datos[3])
+                    estado = int(datos[4])
+                    if estado == 1:
+                        alerta = 'Sí'
+                    if estado == 0:
+                        alerta = 'No'
+                    
+                    # Crea un mensaje en formato JSON
+                    msg = f'{{"x":{x},"y":{y},"z":{z},"Bateria":{nivel_de_bateria},"Bateria baja":{alerta}}}'
+                    
+                    # Publica el mensaje en el tópico
+                    client.publish(topic_pub, msg)
+                except ValueError:
+                    print(f"Datos no válidos, ignorados: {datos}")
         
         time.sleep(0.1)  # Pausa para evitar sobrecarga del CPU
