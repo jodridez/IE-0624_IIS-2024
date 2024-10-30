@@ -306,7 +306,7 @@ static void usart_setup(void) {
 
 //
 static void send_data(bool send, axis measurement, float battery_lvl) {
-  char buffer[25];
+  char buffer[30];
   int battery_bool;
 
   if (battery_lvl < 7) {
@@ -316,7 +316,7 @@ static void send_data(bool send, axis measurement, float battery_lvl) {
   }
 
   if (send) {
-    snprintf(buffer, sizeof(buffer), "%d,%d,%d,%d\r\n", measurement.x, measurement.y, measurement.z, battery_bool);
+    snprintf(buffer, sizeof(buffer), "%d,%d,%d,%.2f,%d\r\n", measurement.x, measurement.y, measurement.z, battery_lvl, battery_bool);
 
     for (char * p = buffer;* p; p++) {
       usart_send_blocking(USART1, * p);
