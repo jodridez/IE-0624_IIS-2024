@@ -33,11 +33,9 @@ Caracteristicas:
 
 #include <string.h> // Para funciones de manejo de cadenas
 
-#include <math.h> // Para funciones matematicas
- // Librerias del ejemplo de lcd-serial
+// Librerias del ejemplo de lcd-serial
 #include "clock.h" // Para configuracion de reloj
 
-#include "console.h" // Para funciones de consola
 
 #include "sdram.h" // Para funciones de SDRAM
 
@@ -113,23 +111,22 @@ axis;
 /*////////////////////////////////////////////////////////////////////////////////////////
     P   R   O   T   O   T   I   P   O   S
 */ ///////////////////////////////////////////////////////////////////////////////////////
-void reg_write(uint16_t reg, uint16_t val); // Función para escribir en un registro
-uint8_t reg_read(uint8_t reg); // Función para leer un registro
+void reg_write(uint16_t reg, uint16_t val); // Escribe en un registro
+uint8_t reg_read(uint8_t reg); // Lee un registro
 
-void gyro_setup(void); // Función para configurar el giroscopio
-//void adc_setup(void); // Función para configurar el ADC  (Convertidor Analógico-Digital)
-void setup(void); // Función para configurar el microcontrolador
+void gyro_setup(void); // Configura el giroscopio
 
-int16_t axis_read(uint8_t out_l_reg, uint8_t out_m_reg); // Función para leer un eje del giroscopio
-axis xyz_read(void); // Función para leer valores de los ejes X, Y y Z
+void setup(void); // Configura el microcontrolador
 
-//uint16_t read_adc_naiive(uint8_t channel); // Función para leer un canal del ADC
-void display_data(axis measurement, float battery_lvl, bool send); // Función para desplegar los datos en la pantalla LCD
+int16_t axis_read(uint8_t out_l_reg, uint8_t out_m_reg); // Lee un eje del giroscopio
+axis xyz_read(void); // Lee valores de los ejes X, Y y Z
+
+void display_data(axis measurement, float battery_lvl, bool send); // Imprime los datos en la pantalla LCD
 
 /*///////////////////////////////////////////////////////////////////////////////////////
     D   E   F   I   N   I   C   I   O   N   E   S   -   F   U   N   C   I   O   N   E   S
 */ //////////////////////////////////////////////////////////////////////////////////////
-// Funcion para ESCRIBIR en un registro
+// ESCRIBE en un registro
 void reg_write(uint16_t reg, uint16_t val) {
   //CS para el giroscopio corresponde al pin 01 del puerto C
   gpio_clear(GPIOC, GPIO1); // 1 Bajar CS del giroscpio para comenzar 
@@ -143,7 +140,7 @@ void reg_write(uint16_t reg, uint16_t val) {
   gpio_set(GPIOC, GPIO1); // 6 Se pone en alto CS
 }
 
-// Funcion para LEER en un registro 
+// LEE un registro 
 uint8_t reg_read(uint8_t command) {
   gpio_clear(GPIOC, GPIO1); // 1 Bajar CS del giroscpio para comenzar 
 
@@ -156,7 +153,7 @@ uint8_t reg_read(uint8_t command) {
   return result; // Devuelve el resultado leído
 }
 
-// Función para configurar el módulo SPI5 y GPIOs relacionados
+// Configura el módulo SPI5 y GPIOs relacionados
 void gyro_setup(void) {
   /*Configuracion de pines giroscopio, extraido de spi-mems*/
   rcc_periph_clock_enable(RCC_GPIOF | RCC_GPIOC); // Habilita el reloj de los puertos F y C
@@ -178,16 +175,16 @@ void gyro_setup(void) {
   rcc_periph_clock_enable(RCC_SPI5);
 
   // Configuración de SPI5. Siguiendo la guia
-  spi_set_master_mode(SPI5); // Establece SPI5 en modo maestro
-  spi_set_baudrate_prescaler(SPI5, SPI_CR1_BAUDRATE_FPCLK_DIV_4); // Configura la velocidad de baudios de SPI5. Extraido de spi-mems
-  spi_set_clock_polarity_0(SPI5); // Configura la polaridad del reloj a 0
-  spi_set_clock_phase_0(SPI5); // Configura la fase del reloj a 0
-  spi_set_full_duplex_mode(SPI5); // Establece SPI5 en modo full duplex
-  spi_set_unidirectional_mode(SPI5); // Establece SPI5 en modo unidireccional (pero con 3 cables)
-  spi_enable_software_slave_management(SPI5); // Habilita la gestión de esclavo por software
-  spi_send_msb_first(SPI5); // Establece la transmisión de bits empezando por el más significativo
-  spi_set_nss_high(SPI5); // Establece el pin NSS (Chip Select) en alto
-  spi_enable(SPI5); // Habilita SPI5
+  spi_set_master_mode(SPI5); 
+  spi_set_baudrate_prescaler(SPI5, SPI_CR1_BAUDRATE_FPCLK_DIV_4); // Velocidad de baudios de SPI5. Extraido de spi-mems
+  spi_set_clock_polarity_0(SPI5); 
+  spi_set_clock_phase_0(SPI5); 
+  spi_set_full_duplex_mode(SPI5); 
+  spi_set_unidirectional_mode(SPI5); 
+  spi_enable_software_slave_management(SPI5); 
+  spi_send_msb_first(SPI5); 
+  spi_set_nss_high(SPI5); 
+  spi_enable(SPI5); 
 
   //Configuracion de registros del giroscopio
   //Para el registro CTRL_REG1 (Control de ejes y poder)
@@ -198,7 +195,7 @@ void gyro_setup(void) {
   reg_write(CTRL_REG4, BDU | BLE | FS1 | FS0 | SIM);
 }
 
-// Función para configurar el ADC (Convertidor Analógico-Digital) extraido de adc-dac-printf.c
+// Configura el ADC (Convertidor Analógico-Digital) extraido de adc-dac-printf.c
 static void adc_setup(void) {
   rcc_periph_clock_enable(RCC_GPIOA); // Habilita el reloj del puerto A
   rcc_periph_clock_enable(RCC_ADC1); // Habilita el reloj del ADC1
@@ -206,16 +203,15 @@ static void adc_setup(void) {
   // Configura los pines 5 del puerto A como analógicos
   gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO5);
 
-  adc_power_off(ADC1); // Apaga el ADC1
+  adc_power_off(ADC1); 
 
-  adc_disable_scan_mode(ADC1); // Deshabilita el modo de escaneo del ADC1
-  adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_3CYC); // Configura el tiempo de muestreo en todos los canales del ADC1
+  adc_disable_scan_mode(ADC1); 
+  adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_3CYC); 
 
-  adc_power_on(ADC1); // Enciende el ADC1
-
+  adc_power_on(ADC1); 
 }
 
-// Función para leer un canal del ADC (Convertidor Analógico-Digital) extraido de adc-dac-printf.c
+// Lee un canal del ADC (Convertidor Analógico-Digital) extraido de adc-dac-printf.c
 static uint16_t read_adc_naiive(uint8_t channel) {
   uint8_t channel_array[16];
   channel_array[0] = channel;
@@ -226,12 +222,12 @@ static uint16_t read_adc_naiive(uint8_t channel) {
   return reg16;
 }
 
-// Función para leer un eje del giroscopio, combinando el byte menos significativo (out_l_reg) y el más significativo (out_m_reg)
+// Lee un eje del giroscopio, combinando el byte menos significativo (out_l_reg) y el más significativo (out_m_reg)
 int16_t axis_read(uint8_t out_l_reg, uint8_t out_m_reg) {
   return reg_read(out_l_reg) | (reg_read(out_m_reg) << 8);
 }
 
-// Función para leer los valores de los ejes X, Y, Z del giroscopio
+// Lee los valores de los ejes X, Y, Z del giroscopio
 axis xyz_read(void) {
   axis measurement;
   // Lee y escala los valores de los ejes
@@ -239,7 +235,7 @@ axis xyz_read(void) {
   measurement.y = axis_read(OUT_Y_L | READ, OUT_Y_H | READ) * SENSITIVITY;
   measurement.z = axis_read(OUT_Z_L | READ, OUT_Z_H | READ) * SENSITIVITY;
 
-  return measurement; // Devuelve la measurement  de los 3 ejes
+  return measurement;
 }
 
 //FUNCIONES DEL LED DE ADVERTENCIA DE BATERIA BAJA
@@ -270,7 +266,7 @@ static void led_greend_blink(bool send) {
   }
 }
 
-// Función para configurar el botón, extraido de button.c
+// Configura el botón, extraido de button.c
 static void botton_setup(void) {
   rcc_periph_clock_enable(RCC_GPIOA); // Habilita el reloj del puerto A
   gpio_mode_setup(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO0); // Configura el pin 0 del puerto A como entrada
@@ -375,7 +371,6 @@ void display_data(axis measurement, float battery_lvl, bool send) {
 // Función para inicializar todo el sistema
 void setup(void) {
   clock_setup();
-  console_setup(115200);
   sdram_init();
 
   gyro_setup();
@@ -420,7 +415,6 @@ int main(void) {
     led_greend_blink(send); // Enciende el LED verde de comunicación
 
     msleep(100); // Espera 100 ms
-    //memset(buffer, 0, sizeof(buffer));
   }
   return 0; // Fin del programa
 }
