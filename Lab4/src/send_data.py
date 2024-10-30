@@ -1,35 +1,43 @@
-#
-# Copyright © 2016-2024 The Thingsboard Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
+import serial
+import time
 import paho.mqtt.client as mqtt
-from time import sleep
-import random
 
-broker="iot.eie.ucr.ac.cr"
-topic_pub='v1/devices/me/telemetry'
+# Configuración del puerto serie
+puerto = '/dev/ttyACM0'
+baudrate = 115200
 
+# Configuración de MQTT
+broker = "iot.eie.ucr.ac.cr"
+topic_pub = 'v1/devices/me/telemetry'
 
+# Inicializa el cliente MQTT
 client = mqtt.Client()
+client.username_pw_set("t59vaa9irj8q9cixb7k3")  # Configura las credenciales
+client.connect(broker, 1883, 1)  # Conecta al broker
 
-client.username_pw_set("t59vaa9irj8q9cixb7k3")
-client.connect(broker, 1883, 1)
-
-for i in range(5):
-    x = random.randrange(20, 100)
-    print(x)
-    msg = '{"windSpeed":"'+ str(x) + '"}'
-    client.publish(topic_pub, msg)
-    sleep(0.1)
+# Abre el puerto serie
+with serial.Serial(puerto, baudrate, timeout=1) as ser:
+    while True:
+        linea = ser.readline().decode('utf-8').rstrip()  # Lee y decodifica la línea
+        if linea:  # Si hay datos en la línea
+            # Separa los datos en una lista
+            datos = linea.split(',')
+            if len(datos) == 5:  # Verifica que haya 5 elementos
+                # Convierte los datos a los tipos apropiados
+                x = float(datos[0])
+                y = float(datos[1])
+                z = float(datos[2])
+                nivel_de_bateria = float(datos[3])
+                estado = int(datos[4])
+                if estado == 1:
+                    alerta = 'Sí'
+                if estado == 0:
+                    alerta = 'No'
+                
+                # Crea un mensaje en formato JSON
+                msg = f'{{"x":{x},"y":{y},"z":{z},"Bateria":{nivel_de_bateria},"Bateria baja":{alerta}}}'
+                
+                # Publica el mensaje en el tópico
+                client.publish(topic_pub, msg)
+        
+        time.sleep(0.1)  # Pausa para evitar sobrecarga del CPU
