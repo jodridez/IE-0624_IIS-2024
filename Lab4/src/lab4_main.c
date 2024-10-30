@@ -31,6 +31,8 @@ Caracteristicas:
 
 #include <stdint.h> // Para definiciones de tipos de datos
 
+#include <string.h> // Para funciones de manejo de cadenas
+
 #include <math.h> // Para funciones matematicas
  // Librerias del ejemplo de lcd-serial
 #include "clock.h" // Para configuracion de reloj
@@ -282,10 +284,10 @@ static void usart_setup(void) {
   rcc_periph_clock_enable(RCC_GPIOA);
 
   /* Enable clocks for USART2. */
-  rcc_periph_clock_enable(RCC_USART1);
+  rcc_periph_clock_enable(RCC_USART1); // Habilita el reloj para USART1
 
   /* Setup GPIO pins for USART1 transmit. */
-  gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO9);
+  gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO9); // Configura el pin 9 del puerto A como salida
 
   /* Setup USART1 TX pin as alternate function. */
   gpio_set_af(GPIOA, GPIO_AF7, GPIO9);
@@ -300,6 +302,26 @@ static void usart_setup(void) {
 
   /* Finally enable the USART. */
   usart_enable(USART1);
+}
+
+//
+static void send_data(bool send, axis measurement, float battery_lvl) {
+  char buffer[25];
+  int battery_bool;
+
+  if (battery_lvl < 7) {
+    battery_bool = 1;
+  } else {
+    battery_bool = 0;
+  }
+
+  if (send) {
+    snprintf(buffer, sizeof(buffer), "%d,%d,%d,%d\r\n", measurement.x, measurement.y, measurement.z, battery_bool);
+
+    for (char * p = buffer;* p; p++) {
+      usart_send_blocking(USART1, * p);
+    }
+  }
 }
 
 // Función para mostrar los datos en la pantalla LCD
@@ -375,7 +397,6 @@ int main(void) {
   uint16_t input_adc5;
   uint16_t battery_lvl;
   bool send = false;
-
   setup();
 
   // Bucle principal del programa
@@ -390,12 +411,16 @@ int main(void) {
       send = !send;
     }
 
+    /// Prueba de USART:
+    send_data(send, measurement, battery_lvl); // Si 'enviar' es verdadero, envía los datos.
+
     display_data(measurement, battery_lvl, send); // Muestra la data en la pantalla LCD.
 
     led_red_toggle(battery_lvl); // Enciende el LED de advertencia de batería baja
     led_greend_blink(send); // Enciende el LED verde de comunicación
 
     msleep(100); // Espera 100 ms
+    //memset(buffer, 0, sizeof(buffer));
   }
   return 0; // Fin del programa
 }
