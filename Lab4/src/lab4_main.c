@@ -200,7 +200,7 @@ static void adc_setup(void) {
   rcc_periph_clock_enable(RCC_GPIOA); // Habilita el reloj del puerto A
   rcc_periph_clock_enable(RCC_ADC1); // Habilita el reloj del ADC1
 
-  // PIN PA3 MODO ANALOGICO
+  // PIN PA1 MODO ANALOGICO
   gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO1);
 
   adc_power_off(ADC1);
